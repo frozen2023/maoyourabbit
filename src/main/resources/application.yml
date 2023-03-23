@@ -17,3 +17,13 @@ mybatis-plus:
       logic-delete-field: deleted
       logic-delete-value: 1
       logic-not-delete-value: 0
+qiniu:
+  kodo:
+    # 配置accessKey
+    accessKey: lIjnI4u48v1kMv2Nd2D1fs61kKHY8gxELa7zcbml
+    # 配置secretKey
+    secretKey: Fc-Z6wx_L6Rqi2010j6E6f6OVxVUnykx3XbXKj29
+    # 配置空间名称
+    bucket: frozen2023
+    # 配置域名
+    domain: rrz6xq6jx.hn-bkt.clouddn.com

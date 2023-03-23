@@ -17,7 +17,6 @@ public class MPConfig {
         return new H2KeyGenerator();
     }
 
-
     @Bean
     public MybatisPlusInterceptor mybatisPlusInterceptor() {
         MybatisPlusInterceptor mybatisPlusInterceptor = new MybatisPlusInterceptor();
@@ -28,8 +27,6 @@ public class MPConfig {
 
         return mybatisPlusInterceptor;
     }
-
-
 }
 
 

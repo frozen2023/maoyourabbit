@@ -8,10 +8,12 @@ import com.chen.service.UserService;
 import com.chen.util.RedisCache;
 import com.chen.util.SnowFlakeUtil;
 import com.chen.util.TokenUtil;
+import com.chen.util.UserGetter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
@@ -33,6 +35,9 @@ public class UserServiceImpl implements UserService {
     private AuthenticationManager authenticationManager;
     @Resource
     private RedisCache redisCache;
+    @Resource
+    private UserGetter userGetter;
+
     @Override
     public ReturnType register(User user) {
         user.setUserId(SnowFlakeUtil.getSnowFlakeId());
@@ -58,11 +63,20 @@ public class UserServiceImpl implements UserService {
         LoginUser loginUser = (LoginUser) authenticate.getPrincipal();
         Long userId = loginUser.getUser().getUserId();
         String token = TokenUtil.createToken(userId);
+        String authority = loginUser.getUser().getAuthority();
         Map<String,Object> map = new HashMap();
         redisCache.setCacheObject("login:"+userId,loginUser);
-        log.info("存在redis里的用户信息:" + redisCache.getCacheObject("login:"+userId));
         map.put("token",token);
+        map.put("authority",authority);
         log.info("id为{}的用户登录成功!",userId);
         return new ReturnType().code(200).message("登录成功").data(map);
+    }
+
+    @Override
+    public ReturnType logout() {
+        Long userId = userGetter.getUser().getUserId();
+        log.info("id为{}的用户退出登录",userId);
+        redisCache.deleteObject("login:" + userId);
+        return new ReturnType().code(200).message("成功退出登录");
     }
 }
