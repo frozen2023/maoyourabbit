@@ -11,10 +11,6 @@ import lombok.*;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * <p>
- * 
- * </p>
- *
  * @author Frozen
  * @since 2023-03-22
  */
@@ -36,9 +32,13 @@ public class User implements Serializable {
 
     private String nickname; //昵称
 
+    private String headUrl; //头像地址(不含域名)
+
     private String authority; //权限
 
     private String email; //邮箱
+
+    private String phoneNumber; //手机号码
 
     private Integer authenticated; //是否认证
 
@@ -58,6 +58,4 @@ public class User implements Serializable {
 
     @TableLogic
     private Integer deleted; //逻辑删除
-
-
 }

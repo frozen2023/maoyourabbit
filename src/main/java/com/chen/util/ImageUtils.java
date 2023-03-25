@@ -1,6 +1,7 @@
 package com.chen.util;
 
-import com.chen.MaoyouRabbitApplication;
+import cn.hutool.core.io.FileTypeUtil;
+import cn.hutool.core.io.FileUtil;
 import com.qiniu.storage.Configuration;
 import com.qiniu.storage.Region;
 import com.qiniu.storage.UploadManager;
@@ -8,9 +9,10 @@ import com.qiniu.util.Auth;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.commons.CommonsMultipartFile;
 
+import java.io.File;
 import java.io.IOException;
-import java.sql.Struct;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -26,13 +28,20 @@ public class ImageUtils {
     String bucket;
     @Value("${qiniu.kodo.domain}")
     String domain;
+    public static String[] IMAGE_FILE_EXTD = new String[] { ".png", ".bmp", ".jpg", ".jpeg",".pdf" };
 
-  /**
-     * 处理多文件
-     * @param multipartFiles
-     * @return
-     */
-    public Map<String, List<String>> uploadImages(List<MultipartFile> multipartFiles){
+    public boolean isImageAllowed(MultipartFile file) {
+        String filename = file.getOriginalFilename();
+        String filetype = filename.substring(filename.lastIndexOf("."));
+        System.out.println("fileType==>"+filetype);
+        for (String ext : IMAGE_FILE_EXTD) {
+            if(ext.equalsIgnoreCase(filetype)){
+                return true;
+            }
+        }
+        return false;
+    }
+    public Map<String, List<String>> uploadImages(List<MultipartFile> multipartFiles) {
         Map<String,List<String>> map = new HashMap<>();
         List<String> imageUrls = new ArrayList<>();
         for(MultipartFile file : multipartFiles){
@@ -41,7 +50,7 @@ public class ImageUtils {
         map.put("imageUrl",imageUrls);
         return map;
     }
-    public Map<String, String> uploadImage(MultipartFile multipartFiles){
+    public Map<String, String> uploadImage(MultipartFile multipartFiles) {
         Map<String,String> map = new HashMap<>();
         map.put("imageUrl",uploadImageQiniu(multipartFiles));
         return map;
@@ -51,7 +60,7 @@ public class ImageUtils {
      * @param multipartFile
      * @return
      */
-    private String uploadImageQiniu(MultipartFile multipartFile){
+    private String uploadImageQiniu(MultipartFile multipartFile) {
         try {
             //1、获取文件上传的流
             byte[] fileBytes = multipartFile.getBytes();

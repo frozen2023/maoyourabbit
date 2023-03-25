@@ -2,6 +2,7 @@ package com.chen.service;
 
 import com.chen.common.ReturnType;
 import com.chen.pojo.User;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * <p>
@@ -15,4 +16,11 @@ public interface UserService  {
      ReturnType register(User user);
      ReturnType login(User user);
      ReturnType logout();
+     ReturnType head(MultipartFile file);
+     ReturnType email(String email);
+     ReturnType getUserDetails();
+     ReturnType updatePwd(String pwd);
+     ReturnType updateName(String username,String nickname);
+     ReturnType auth(String realName,String identityCard);
+     ReturnType bindingPhone(String phone);
 }

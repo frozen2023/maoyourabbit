@@ -10,6 +10,8 @@ import org.springframework.stereotype.Component;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+//redis缓存工具类
+
 @Component
 public class RedisCache {
 

@@ -42,6 +42,21 @@
             <version>7.11.0</version>
         </dependency>
 
+        <!-- hutool-->
+        <dependency>
+            <groupId>cn.hutool</groupId>
+            <artifactId>hutool-all</artifactId>
+            <version>5.8.15</version>
+        </dependency>
+
+        <!--socketio -->
+        <dependency>
+            <groupId>com.corundumstudio.socketio</groupId>
+            <artifactId>netty-socketio</artifactId>
+            <version>1.7.23</version>
+        </dependency>
+
+
         <!--redis-->
         <dependency>
             <groupId>org.springframework.boot</groupId>

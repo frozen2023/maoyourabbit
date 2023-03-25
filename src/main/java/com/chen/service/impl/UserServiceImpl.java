@@ -5,17 +5,15 @@ import com.chen.pojo.User;
 import com.chen.mapper.UserMapper;
 import com.chen.security.LoginUser;
 import com.chen.service.UserService;
-import com.chen.util.RedisCache;
-import com.chen.util.SnowFlakeUtil;
-import com.chen.util.TokenUtil;
-import com.chen.util.UserGetter;
+import com.chen.util.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
 import javax.annotation.Resource;
 import java.util.HashMap;
 import java.util.Map;
@@ -37,13 +35,17 @@ public class UserServiceImpl implements UserService {
     private RedisCache redisCache;
     @Resource
     private UserGetter userGetter;
+    @Resource
+    private ImageUtils imageUtils;
+    @Resource
+    private PasswordEncoder passwordEncoder;
 
     @Override
     public ReturnType register(User user) {
         user.setUserId(SnowFlakeUtil.getSnowFlakeId());
-        user.setPassword(new BCryptPasswordEncoder().encode(user.getPassword()));
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
         int r = userMapper.insert(user);
-        if(r>0){
+        if (r>0){
             log.info("id为{}的用户注册成功",user.getUserId());
             return new ReturnType().code(200).message("注册成功");
         }
@@ -57,10 +59,10 @@ public class UserServiceImpl implements UserService {
     public ReturnType login(User user) {
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(user.getUsername(),user.getPassword());
         Authentication authenticate = authenticationManager.authenticate(authenticationToken);
-        if(Objects.isNull(authenticate)){
+        if (Objects.isNull(authenticate)) {
             throw new RuntimeException("验证失败");
         }
-        LoginUser loginUser = (LoginUser) authenticate.getPrincipal();
+        LoginUser loginUser = (LoginUser)authenticate.getPrincipal();
         Long userId = loginUser.getUser().getUserId();
         String token = TokenUtil.createToken(userId);
         String authority = loginUser.getUser().getAuthority();
@@ -78,5 +80,109 @@ public class UserServiceImpl implements UserService {
         log.info("id为{}的用户退出登录",userId);
         redisCache.deleteObject("login:" + userId);
         return new ReturnType().code(200).message("成功退出登录");
+    }
+
+    @Override
+    public ReturnType head(MultipartFile file) {
+        if (Objects.isNull(file)) {
+            return new ReturnType().code(404).message("文件为空");
+        }
+        if (!imageUtils.isImageAllowed(file)) {
+            return new ReturnType().code(404).message("文件格式错误");
+        }
+        Map<String, String> map = imageUtils.uploadImage(file);
+        String url = map.get("imageUrl");
+        User user = userGetter.getUser();
+        user.setHeadUrl(url);
+        if (userMapper.updateById(user) > 0) {
+            return new ReturnType().code(200).message("操作成功").data(map);
+        } else {
+            return new ReturnType().code(404).message("操作失败");
+        }
+    }
+
+    /*
+    * 左大括号前不换行
+      左大括号后换行
+     右大括号前换行
+    右大括号后还有else等代码则不换行；表示终止的右大括号后必须换行*/
+    @Override
+    public ReturnType email(String email) {
+        if (AuthUtil.authEmail(email)) {
+            User user = userGetter.getUser();
+            user.setEmail(email);
+            if (userMapper.updateById(user) > 0) {
+                return new ReturnType().code(200).message("操作成功");
+            } else {
+                return new ReturnType().code(404).message("操作失败");
+            }
+        } else {
+            return new ReturnType().code(404).message("邮箱格式错误");
+        }
+    }
+
+    @Override
+    public ReturnType getUserDetails() {
+        User user = userGetter.getUser();
+        if (Objects.isNull(user)) {
+            return new ReturnType().code(404).message("操作失败");
+        }
+        return new ReturnType().code(200).message("操作成功").data(user);
+    }
+
+    @Override
+    public ReturnType updatePwd(String pwd) {
+        User user = userGetter.getUser();
+        user.setPassword(passwordEncoder.encode(pwd));
+        if (userMapper.updateById(user) > 0) {
+            return new ReturnType().code(200).message("操作成功");
+        } else {
+            return new ReturnType().code(404).message("操作失败");
+        }
+    }
+
+    @Override
+    public ReturnType updateName(String username, String nickname) {
+        User user = userGetter.getUser();
+        if (!Objects.isNull(username) && username != "") {
+            user.setUsername(username);
+        } else {
+            return new ReturnType().code(404).message("用户名不能为空");
+        }
+        if (!Objects.isNull(nickname) && nickname != "") {
+            user.setNickname(nickname);
+        }
+        if (userMapper.updateById(user) > 0) {
+            return new ReturnType().code(200).message("操作成功");
+        }
+        return new ReturnType().code(404).message("操作失败");
+    }
+
+    @Override
+    public ReturnType auth(String realName, String identityCard) {
+
+        if (AuthUtil.authIdentity(realName,identityCard)) {
+            return new ReturnType().code(404).message("实名认证失败");
+        }
+        User user = userGetter.getUser();
+        user.setAuthenticated(1);
+        user.setRealName(realName);
+        user.setIdentityCard(identityCard);
+        if (userMapper.updateById(user) > 0) {
+            return new ReturnType().code(200).message("操作成功");
+        }
+        return new ReturnType().code(404).message("操作失败");
+    }
+
+    @Override
+    public ReturnType bindingPhone(String phone) {
+        if (AuthUtil.authPhone(phone)) {
+            User user = userGetter.getUser();
+            user.setPhoneNumber(phone);
+            if (userMapper.updateById(user) > 0) {
+                return new ReturnType().code(200).message("绑定成功");
+            }
+        }
+        return new ReturnType().code(404).message("绑定失败");
     }
 }

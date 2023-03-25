@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -22,6 +23,10 @@ import java.util.Collections;
 
 @Configuration
 @EnableWebSecurity
+@EnableGlobalMethodSecurity(
+        prePostEnabled = true,
+        securedEnabled = true,
+        jsr250Enabled = true)
 public class SecurityConfig{
 
     @Resource
@@ -46,9 +51,7 @@ public class SecurityConfig{
                 .cors().and()
                 .exceptionHandling().authenticationEntryPoint(jwtAuthError).accessDeniedHandler(jwtAuthError).and()
                 .authorizeRequests()
-                // 指定某些接口不需要通过验证即可访问。登录接口肯定是不需要认证的
-                .antMatchers("/user/login","/user").permitAll()
-                .antMatchers("/admin/**").hasRole("ADMIN")
+                .antMatchers("/user/login","/user/register").permitAll()
                 .anyRequest().authenticated()
                 .and()
                 // 基于 token，不需要 session
