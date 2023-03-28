@@ -3,12 +3,10 @@ package com.chen.socketio;
 import com.corundumstudio.socketio.SocketIOClient;
 import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+// SocketIO 资源仓库
 @Component
 public class ClientCache {
 
@@ -54,6 +52,15 @@ public class ClientCache {
             count += entry.getValue().size();
         }
         return count;
+    }
+
+    public List<Long> getOnlineUsers() {
+        List<Long> list = new ArrayList<>();
+        for (Long id : clients.keySet()) {
+            if(!Objects.isNull(clients.get(id)) && clients.get(id).size() > 0)
+                list.add(id);
+        }
+        return list;
     }
 
 }

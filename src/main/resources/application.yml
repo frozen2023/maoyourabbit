@@ -1,16 +1,22 @@
+server:
+  port: 9090
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/maoyourabbit?useSSL=true&useUnicode=true&characterEncoding=utf8
     username: root
     password: 123456
+  devtools:
+    restart:
+      enabled: true  #设置开启热部署
+      additional-paths: src/main/java #重启目录
+      exclude: WEB-INF/**
   redis:
     host: localhost
     port: 6379
 mybatis-plus:
   configuration:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
-
   global-config:
     db-config:
       id-type: assign_id
@@ -30,7 +36,7 @@ qiniu:
 # netty-socketio 配置
 socketio:
   host: 127.0.0.1
-  port: 8888
+  port: 9000
   # 设置最大每帧处理数据的长度，防止他人利用大数据来攻击服务器
   maxFramePayloadLength: 1048576
   # 设置http交互最大内容长度
@@ -45,3 +51,4 @@ socketio:
   pingTimeout: 6000000
   # Ping消息间隔（毫秒），默认25秒。客户端向服务器发送一条心跳消息间隔
   pingInterval: 25000
+

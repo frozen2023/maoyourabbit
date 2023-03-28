@@ -52,6 +52,7 @@ public class SecurityConfig{
                 .exceptionHandling().authenticationEntryPoint(jwtAuthError).accessDeniedHandler(jwtAuthError).and()
                 .authorizeRequests()
                 .antMatchers("/user/login","/user/register").permitAll()
+                .antMatchers("/**.html").permitAll()
                 .anyRequest().authenticated()
                 .and()
                 // 基于 token，不需要 session
