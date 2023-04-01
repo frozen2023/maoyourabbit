@@ -7,6 +7,8 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
 
+// 配置socketIO服务的自启动和自关闭
+
 @Slf4j
 @Service
 public class SocketIOService {

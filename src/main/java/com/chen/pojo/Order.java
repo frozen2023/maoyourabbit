@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Date;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.*;
 
 /**
@@ -44,9 +45,11 @@ public class Order implements Serializable {
     @TableField("finished")
     private Integer finished;
 
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     @TableField(value = "mgt_create",fill = FieldFill.INSERT)
     private Date mgtCreate;
 
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     @TableField(value = "mgt_modify",fill = FieldFill.INSERT_UPDATE)
     private Date mgtModify;
 

@@ -9,6 +9,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import javax.annotation.Resource;
+import java.util.HashMap;
+import java.util.Map;
 
 @SpringBootTest
 class MaoyouRabbitApplicationTests {
@@ -17,14 +19,11 @@ class MaoyouRabbitApplicationTests {
     private ChatMessageMapper chatMessageMapper;
     @Test
     void contextLoads() {
-        ChatMessage message = new ChatMessage();
-        message.setMessageId(SnowFlakeUtil.getSnowFlakeId());
-        message.setSenderId(1021012302L);
-        message.setReceiverId(1021012302L);
-        message.setType(1);
-        message.setInfo("你好");
-        message.setViewed(1);
-        chatMessageMapper.insert(message);
+        /*Map<String,Object> map=new HashMap<>();
+        map.put("xxx",8);
+
+        Long a= Long.valueOf( map.get("xxx").toString());
+        System.out.println(a);*/
     }
 
 }

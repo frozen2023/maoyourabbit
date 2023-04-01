@@ -7,7 +7,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Date;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.*;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Frozen
@@ -47,11 +49,13 @@ public class Account implements Serializable {
     @TableField("bought")
     private Integer bought;
 
-    @TableField(value = "gmt_create",fill = FieldFill.INSERT)
-    private Date gmtCreate;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    @TableField(value = "mgt_create",fill = FieldFill.INSERT)
+    private Date mgtCreate;
 
-    @TableField(value = "gmt_modify",fill = FieldFill.INSERT_UPDATE)
-    private Date gmtModify;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    @TableField(value = "mgt_modify",fill = FieldFill.INSERT_UPDATE)
+    private Date mgtModify;
 
     @TableField("deleted")
     @TableLogic

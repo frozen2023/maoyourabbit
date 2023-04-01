@@ -15,7 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 public interface UserService  {
      ReturnType register(User user);
      ReturnType login(User user);
-     ReturnType logout();
+     ReturnType logout(Long userId);
      ReturnType head(MultipartFile file);
      ReturnType email(String email);
      ReturnType getUserDetails();

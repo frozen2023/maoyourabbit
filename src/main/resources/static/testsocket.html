@@ -29,7 +29,7 @@
 <body>
 <h2>SocketClient_V1.0</h2>
 <div style="border: 1px;">
-    <label>socketurl:</label><input type="text" id="url" value="http://localhost:8010">
+    <label>socketurl:</label><input type="text" id="url" value="http://localhost:9000">
     <br>
     <label>clientId:</label><input type="text" id="clientId" value="102101230">
     <br>
@@ -81,6 +81,16 @@
             errorCount=0;
         });
         socket.on('chatEvent', function (data) {
+            output('<span class="username-msg"><font color="blue">'+getNowTime()+'&nbsp;</font>' + data + ' </span>');
+            console.log(data.info);
+        });
+
+        socket.on('examinePassEvent', function (data) {
+            output('<span class="username-msg"><font color="blue">'+getNowTime()+'&nbsp;</font>' + data + ' </span>');
+            console.log(data);
+        });
+
+        socket.on('examineFailEvent', function (data) {
             output('<span class="username-msg"><font color="blue">'+getNowTime()+'&nbsp;</font>' + data + ' </span>');
             console.log(data);
         });

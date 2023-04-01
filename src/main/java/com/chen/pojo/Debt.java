@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Date;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.*;
 
 /**
@@ -35,11 +36,13 @@ public class Debt implements Serializable {
     @TableField("wiped")
     private Integer wiped;
 
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     @TableField(value = "gmt_create",fill = FieldFill.INSERT)
-    private Date gmtCreate;
+    private Date mgtCreate;
 
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     @TableField(value = "gmt_modify",fill = FieldFill.INSERT_UPDATE)
-    private Date gmtModify;
+    private Date mgtModify;
 
     @TableField("deleted")
     @TableLogic

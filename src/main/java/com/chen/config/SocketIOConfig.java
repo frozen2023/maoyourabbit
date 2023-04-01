@@ -1,6 +1,7 @@
 package com.chen.config;
 
 import com.chen.socketio.ChatSocketIOHandler;
+import com.chen.socketio.SystemSocketIOHandler;
 import com.corundumstudio.socketio.SocketConfig;
 import com.corundumstudio.socketio.SocketIOServer;
 import com.corundumstudio.socketio.annotation.SpringAnnotationScanner;
@@ -18,7 +19,10 @@ import javax.annotation.Resource;
 public class SocketIOConfig {
 
     @Resource
-    private ChatSocketIOHandler socketIOHandler;
+    private ChatSocketIOHandler chatSocketIOHandler;
+
+    @Resource
+    private SystemSocketIOHandler systemSocketIOHandler;
 
     @Value("${socketio.host}")
     private String host;
@@ -76,7 +80,8 @@ public class SocketIOConfig {
         config.setPingTimeout(pingTimeout);
         config.setPingInterval(pingInterval);
         SocketIOServer socketIOServer = new SocketIOServer(config);
-        socketIOServer.addListeners(socketIOHandler);
+        socketIOServer.addListeners(chatSocketIOHandler);
+        socketIOServer.addListeners(systemSocketIOHandler);
         return socketIOServer;
     }
 }

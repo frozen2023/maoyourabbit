@@ -64,6 +64,10 @@ public class UserServiceImpl implements UserService {
         }
         LoginUser loginUser = (LoginUser)authenticate.getPrincipal();
         Long userId = loginUser.getUser().getUserId();
+        if(redisCache.getCacheObject("login:"+userId) != null) {
+            // 顶号操作
+            return new ReturnType().code(404).message("账号已被登录");
+        }
         String token = TokenUtil.createToken(userId);
         String authority = loginUser.getUser().getAuthority();
         Map<String,Object> map = new HashMap();
@@ -75,8 +79,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public ReturnType logout() {
-        Long userId = userGetter.getUser().getUserId();
+    public ReturnType logout(Long userId) {
         log.info("id为{}的用户退出登录",userId);
         redisCache.deleteObject("login:" + userId);
         return new ReturnType().code(200).message("成功退出登录");

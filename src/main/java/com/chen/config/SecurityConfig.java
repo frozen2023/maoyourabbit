@@ -51,7 +51,7 @@ public class SecurityConfig{
                 .cors().and()
                 .exceptionHandling().authenticationEntryPoint(jwtAuthError).accessDeniedHandler(jwtAuthError).and()
                 .authorizeRequests()
-                .antMatchers("/user/login","/user/register").permitAll()
+                .antMatchers("/user/login","/user/register","/user/logout").permitAll()
                 .antMatchers("/**.html").permitAll()
                 .anyRequest().authenticated()
                 .and()

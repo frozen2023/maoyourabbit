@@ -13,7 +13,7 @@ public class TokenUtil {
     public static String createToken(Long id) {
          String token = JWT.create()
                 .withClaim("userId",id)//payload  //自定义用户名
-                .withExpiresAt(new Date(new Date().getTime() + 86400000))//指定令牌过期时间
+                .withExpiresAt(new Date(new Date().getTime() + 864000000))//指定令牌过期时间
                 .sign(Algorithm.HMAC256(SIGNATURE));//签名
         System.out.println(token);
         return token;
