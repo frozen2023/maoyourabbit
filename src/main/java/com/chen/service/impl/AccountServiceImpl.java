@@ -2,7 +2,6 @@ package com.chen.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.chen.common.ReturnType;
-import com.chen.controller.AccountController;
 import com.chen.pojo.Account;
 import com.chen.mapper.AccountMapper;
 import com.chen.pojo.SystemMessage;
@@ -80,6 +79,11 @@ public class AccountServiceImpl implements AccountService {
         data.put("account",account);
         SystemMessage message = new SystemMessage(ClientCache.EXAMINE_FAIL_EVENT,data,new Date());
         systemMessageSender.sendMsgById(sellerId,message);
-        return new ReturnType().code(200).message("操作成功");
+        account.setDeleted(1);
+        if (accountMapper.deleteById(accountId) > 0) {
+            return new ReturnType().code(200).message("操作成功");
+        } else {
+            return new ReturnType().code(404).message("操作失败");
+        }
     }
 }

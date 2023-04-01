@@ -45,7 +45,7 @@ public class AccountController {
 
     // 审核不通过
     @IsAdmin
-    @PostMapping("/account/fail")
+    @PutMapping("/account/fail")
     public ReturnType fail(@RequestBody Map map) {
         Long sellerId = Long.valueOf(map.get("sellerId").toString());
         Long accountId = Long.valueOf(map.get("accountId").toString());
