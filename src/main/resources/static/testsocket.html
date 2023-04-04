@@ -90,6 +90,11 @@
             console.log(data);
         });
 
+        socket.on('buyerOfferEvent', function (data) {
+            output('<span class="username-msg"><font color="blue">'+getNowTime()+'&nbsp;</font>' + data + ' </span>');
+            console.log(data);
+        });
+
         socket.on('examineFailEvent', function (data) {
             output('<span class="username-msg"><font color="blue">'+getNowTime()+'&nbsp;</font>' + data + ' </span>');
             console.log(data);

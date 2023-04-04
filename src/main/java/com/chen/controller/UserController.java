@@ -5,6 +5,7 @@ import com.chen.pojo.User;
 import com.chen.security.annotations.Common;
 import com.chen.security.annotations.IsUser;
 import com.chen.service.UserService;
+import com.chen.util.ObjectUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -39,7 +40,7 @@ public class UserController {
     // 登出
     @PostMapping("/user/logout")
     public ReturnType logout(@RequestBody Map map) {
-        Long userId = (Long) map.get("userId");
+        Long userId =  ObjectUtils.toLong(map.get("userId"));
         return userService.logout(userId);
     }
 
@@ -61,7 +62,7 @@ public class UserController {
     @IsUser
     @PutMapping("/user/pwd")
     public ReturnType pwd(@RequestBody Map map) {
-        String newPwd = (String) map.get("newPwd");
+        String newPwd = ObjectUtils.toString(map.get("newPwd"));
         return userService.updatePwd(newPwd);
     }
 
@@ -69,7 +70,7 @@ public class UserController {
     @IsUser
     @PutMapping("/user/email")
     public ReturnType email(@RequestBody Map map) {
-        String email = (String) map.get("email");
+        String email = ObjectUtils.toString(map.get("email"));
         return userService.email(email);
     }
 
@@ -77,8 +78,8 @@ public class UserController {
     @IsUser
     @PutMapping("user/name")
     public ReturnType name(@RequestBody Map map) {
-        String username = (String) map.get("username");
-        String nickname = (String) map.get("nickname");
+        String username = ObjectUtils.toString(map.get("username"));
+        String nickname = ObjectUtils.toString(map.get("nickname"));
         return userService.updateName(username,nickname);
     }
 
@@ -86,8 +87,8 @@ public class UserController {
     @IsUser
     @PutMapping("/user/auth")
     public ReturnType auth(@RequestBody Map map) {
-        String realName = (String) map.get("realName");
-        String identityCard = (String) map.get("identityCard");
+        String realName = ObjectUtils.toString(map.get("realName"));
+        String identityCard = ObjectUtils.toString(map.get("identityCard"));
         return userService.auth(realName,identityCard);
     }
 
@@ -95,7 +96,7 @@ public class UserController {
     @IsUser
     @PutMapping("/user/phone")
     public ReturnType phone(@RequestBody Map map) {
-        String phone = (String) map.get("phoneNumber");
+        String phone = ObjectUtils.toString(map.get("phoneNumber"));
         return userService.bindingPhone(phone);
     }
 }

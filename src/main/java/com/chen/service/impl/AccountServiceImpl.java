@@ -1,22 +1,25 @@
 package com.chen.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.chen.common.ReturnType;
 import com.chen.pojo.Account;
 import com.chen.mapper.AccountMapper;
 import com.chen.pojo.SystemMessage;
+import com.chen.pojo.User;
 import com.chen.service.AccountService;
 import com.chen.socketio.ClientCache;
 import com.chen.socketio.SystemMessageSender;
 import com.chen.util.SnowFlakeUtil;
+import com.chen.util.UserGetter;
+import com.sun.javafx.collections.MappingChange;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.ObjectStreamClass;
+import java.math.BigDecimal;
+import java.util.*;
 
 /**
  * @author Frozen
@@ -32,15 +35,18 @@ public class AccountServiceImpl implements AccountService {
     private PasswordEncoder passwordEncoder;
     @Resource
     private SystemMessageSender systemMessageSender;
+    @Resource
+    private UserGetter userGetter;
+
     @Override
     public ReturnType putAccount(Account account) {
         account.setAccountId(SnowFlakeUtil.getSnowFlakeId());
         account.setAccountPassword(passwordEncoder.encode(account.getAccountNumber()));
         if (accountMapper.insert(account) > 0) {
             log.info("id为{}的用户挂出了一个{}的账号",account.getSellerId(),account.getGameName());
-            return new ReturnType().code(200).message("操作成功");
+            return new ReturnType().success();
         } else {
-            return new ReturnType().code(404).message("操作失败");
+            return new ReturnType().error();
         }
     }
 
@@ -51,7 +57,7 @@ public class AccountServiceImpl implements AccountService {
         List<Account> accounts = accountMapper.selectList(wrapper);
         Map<String,Object> map = new HashMap<>();
         map.put("accounts",accounts);
-        return new ReturnType().code(200).message("操作成功").data(map);
+        return new ReturnType().success(map);
     }
 
     @Override
@@ -65,9 +71,9 @@ public class AccountServiceImpl implements AccountService {
             // 给卖家发送系统消息
             SystemMessage message = new SystemMessage(ClientCache.EXAMINE_PASS_EVENT,acc,new Date());
             systemMessageSender.sendMsgById(sellerId,message);
-            return new ReturnType().code(200).message("操作成功");
+            return new ReturnType().success();
         } else {
-            return new ReturnType().code(404).message("操作失败");
+            return new ReturnType().error();
         }
     }
 
@@ -81,9 +87,69 @@ public class AccountServiceImpl implements AccountService {
         systemMessageSender.sendMsgById(sellerId,message);
         account.setDeleted(1);
         if (accountMapper.deleteById(accountId) > 0) {
-            return new ReturnType().code(200).message("操作成功");
+            return new ReturnType().success();
         } else {
-            return new ReturnType().code(404).message("操作失败");
+            return new ReturnType().error();
         }
+    }
+
+    @Override
+    public ReturnType getListedAccounts(Integer page, Integer varified, Integer bought) {
+        Long userId = userGetter.getUserId();
+        Page<Account> queryPage = new Page<>(page,5);
+        QueryWrapper<Account> wrapper = new QueryWrapper<>();
+        wrapper.eq("seller_id",userId);
+        if(varified != 2) {
+            wrapper.eq("varified",varified);
+        }
+        if(bought != 2) {
+            wrapper.eq("bought",bought);
+        }
+        Page<Account> accountPage = accountMapper.selectPage(queryPage, wrapper);
+        long pages = accountPage.getPages();
+        List<Account> records = accountPage.getRecords();
+        System.out.println("共有"+pages+"页");
+        System.out.println(records);
+        Map<String,Object> map = new HashMap<>();
+        map.put("accounts",records);
+        map.put("pages",pages);
+        return new ReturnType().success(map);
+    }
+
+    @Override
+    public ReturnType getPurchasableAccounts(String name, BigDecimal minPrice, BigDecimal maxPrice, String number, Long page) {
+        QueryWrapper<Account> wrapper = new QueryWrapper<>();
+        Page<Account> queryPage = new Page<>(page,5);
+        if (!Objects.isNull(name))
+            wrapper.eq("game_name",name);
+        if (!Objects.isNull(minPrice))
+                wrapper.ge("price",minPrice);
+        if(!Objects.isNull(maxPrice))
+                wrapper.le("price",maxPrice);
+        if(!Objects.isNull(number))
+                wrapper.eq("account_number",number);
+        wrapper.eq("bought",0);
+        Page<Account> accountPage = accountMapper.selectPage(queryPage, wrapper);
+        long pages = accountPage.getPages();
+        List<Account> records = accountPage.getRecords();
+        System.out.println("共有"+pages+"页");
+        System.out.println(records);
+        Map<String,Object> map = new HashMap<>();
+        map.put("accounts",records);
+        map.put("pages",pages);
+        return new ReturnType().success(map);
+    }
+
+    @Override
+    public ReturnType offer(Long sellerId, Long accountId, BigDecimal bid) {
+        Account account = accountMapper.selectById(accountId);
+        User buyer = userGetter.getUser();
+        Map<String,Object> map = new HashMap<>();
+        map.put("account",account);
+        map.put("buyer",buyer);
+        map.put("bid",bid);
+        SystemMessage message = new SystemMessage(ClientCache.BUYER_OFFER_EVENT,map,new Date());
+        systemMessageSender.sendMsgById(sellerId,message);
+        return new ReturnType().success();
     }
 }

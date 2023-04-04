@@ -1,6 +1,6 @@
 package com.chen.security;
 
-import com.chen.common.Constants;
+import com.chen.common.ResultConstant;
 import com.chen.common.ReturnType;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.AccessDeniedException;
@@ -19,7 +19,7 @@ import java.io.PrintWriter;
 public class JwtAuthError implements AuthenticationEntryPoint,AccessDeniedHandler {
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
-        response.setStatus(Constants.CODE_SUCCESS);
+        response.setStatus(ResultConstant.CODE_SUCCESS);
         response.setCharacterEncoding("utf-8");
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         PrintWriter printWriter = response.getWriter();
@@ -31,7 +31,7 @@ public class JwtAuthError implements AuthenticationEntryPoint,AccessDeniedHandle
 
     @Override
     public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException accessDeniedException) throws IOException, ServletException {
-        response.setStatus(Constants.CODE_SUCCESS);
+        response.setStatus(ResultConstant.CODE_SUCCESS);
         response.setCharacterEncoding("utf-8");
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         PrintWriter printWriter = response.getWriter();

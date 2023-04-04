@@ -47,11 +47,11 @@ public class UserServiceImpl implements UserService {
         int r = userMapper.insert(user);
         if (r>0){
             log.info("id为{}的用户注册成功",user.getUserId());
-            return new ReturnType().code(200).message("注册成功");
+            return new ReturnType().success();
         }
         else {
             log.info("id为{}的用户注册失败",user.getUserId());
-            return new ReturnType().code(404).message("注册失败");
+            return new ReturnType().error();
         }
     }
 
@@ -66,7 +66,7 @@ public class UserServiceImpl implements UserService {
         Long userId = loginUser.getUser().getUserId();
         if(redisCache.getCacheObject("login:"+userId) != null) {
             // 顶号操作
-            return new ReturnType().code(404).message("账号已被登录");
+            return new ReturnType().error("账号已被登录");
         }
         String token = TokenUtil.createToken(userId);
         String authority = loginUser.getUser().getAuthority();
@@ -75,32 +75,32 @@ public class UserServiceImpl implements UserService {
         map.put("token",token);
         map.put("authority",authority);
         log.info("id为{}的用户登录成功!",userId);
-        return new ReturnType().code(200).message("登录成功").data(map);
+        return new ReturnType().success(map);
     }
 
     @Override
     public ReturnType logout(Long userId) {
         log.info("id为{}的用户退出登录",userId);
         redisCache.deleteObject("login:" + userId);
-        return new ReturnType().code(200).message("成功退出登录");
+        return new ReturnType().success();
     }
 
     @Override
     public ReturnType head(MultipartFile file) {
         if (Objects.isNull(file)) {
-            return new ReturnType().code(404).message("文件为空");
+            return new ReturnType().error("文件为空");
         }
         if (!imageUtils.isImageAllowed(file)) {
-            return new ReturnType().code(404).message("文件格式错误");
+            return new ReturnType().error("文件格式错误");
         }
         Map<String, String> map = imageUtils.uploadImage(file);
         String url = map.get("imageUrl");
         User user = userGetter.getUser();
         user.setHeadUrl(url);
         if (userMapper.updateById(user) > 0) {
-            return new ReturnType().code(200).message("操作成功").data(map);
+            return new ReturnType().success(map);
         } else {
-            return new ReturnType().code(404).message("操作失败");
+            return new ReturnType().error();
         }
     }
 
@@ -115,12 +115,12 @@ public class UserServiceImpl implements UserService {
             User user = userGetter.getUser();
             user.setEmail(email);
             if (userMapper.updateById(user) > 0) {
-                return new ReturnType().code(200).message("操作成功");
+                return new ReturnType().success();
             } else {
-                return new ReturnType().code(404).message("操作失败");
+                return new ReturnType().error();
             }
         } else {
-            return new ReturnType().code(404).message("邮箱格式错误");
+            return new ReturnType().error("邮箱格式错误");
         }
     }
 
@@ -128,9 +128,9 @@ public class UserServiceImpl implements UserService {
     public ReturnType getUserDetails() {
         User user = userGetter.getUser();
         if (Objects.isNull(user)) {
-            return new ReturnType().code(404).message("操作失败");
+            return new ReturnType().error();
         }
-        return new ReturnType().code(200).message("操作成功").data(user);
+        return new ReturnType().success(user);
     }
 
     @Override
@@ -138,9 +138,9 @@ public class UserServiceImpl implements UserService {
         User user = userGetter.getUser();
         user.setPassword(passwordEncoder.encode(pwd));
         if (userMapper.updateById(user) > 0) {
-            return new ReturnType().code(200).message("操作成功");
+            return new ReturnType().success();
         } else {
-            return new ReturnType().code(404).message("操作失败");
+            return new ReturnType().error();
         }
     }
 
@@ -150,31 +150,31 @@ public class UserServiceImpl implements UserService {
         if (!Objects.isNull(username) && username != "") {
             user.setUsername(username);
         } else {
-            return new ReturnType().code(404).message("用户名不能为空");
+            return new ReturnType().error("用户名不能为空");
         }
         if (!Objects.isNull(nickname) && nickname != "") {
             user.setNickname(nickname);
         }
         if (userMapper.updateById(user) > 0) {
-            return new ReturnType().code(200).message("操作成功");
+            return new ReturnType().success();
         }
-        return new ReturnType().code(404).message("操作失败");
+        return new ReturnType().error();
     }
 
     @Override
     public ReturnType auth(String realName, String identityCard) {
 
         if (AuthUtil.authIdentity(realName,identityCard)) {
-            return new ReturnType().code(404).message("实名认证失败");
+            return new ReturnType().error("实名认证失败");
         }
         User user = userGetter.getUser();
         user.setAuthenticated(1);
         user.setRealName(realName);
         user.setIdentityCard(identityCard);
         if (userMapper.updateById(user) > 0) {
-            return new ReturnType().code(200).message("操作成功");
+            return new ReturnType().success();
         }
-        return new ReturnType().code(404).message("操作失败");
+        return new ReturnType().error();
     }
 
     @Override
@@ -183,9 +183,9 @@ public class UserServiceImpl implements UserService {
             User user = userGetter.getUser();
             user.setPhoneNumber(phone);
             if (userMapper.updateById(user) > 0) {
-                return new ReturnType().code(200).message("绑定成功");
+                return new ReturnType().success();
             }
         }
-        return new ReturnType().code(404).message("绑定失败");
+        return new ReturnType().error();
     }
 }

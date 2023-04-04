@@ -1,11 +1,10 @@
 package com.chen.security;
 
-import com.chen.common.Constants;
+import com.chen.common.ResultConstant;
 import com.chen.common.ReturnType;
 import com.chen.util.RedisCache;
 import com.chen.util.TokenUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
@@ -46,7 +45,7 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
         try {
              userId = TokenUtil.parseToken(token);
         } catch (Exception e) {
-            response.setStatus(Constants.CODE_SUCCESS);
+            response.setStatus(ResultConstant.CODE_SUCCESS);
             response.setCharacterEncoding("utf-8");
             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
             PrintWriter printWriter = response.getWriter();

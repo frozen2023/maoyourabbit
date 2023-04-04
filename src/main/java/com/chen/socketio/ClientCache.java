@@ -14,7 +14,7 @@ public class ClientCache {
     public static final String CHAT_EVENT = "chatEvent"; // 聊天事件
     public static final String EXAMINE_PASS_EVENT = "examinePassEvent"; // 账号审核通过事件
     public static final String EXAMINE_FAIL_EVENT = "examineFailEvent"; // 账号审核失败事件
-
+    public static final String BUYER_OFFER_EVENT = "buyerOfferEvent"; // 买家出价事件
     // 离线系统消息暂存
     private static Map<Long, Queue<SystemMessage>> offlineSystemMessages = new ConcurrentHashMap<>();
 
