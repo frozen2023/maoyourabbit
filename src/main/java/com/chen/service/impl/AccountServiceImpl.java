@@ -3,8 +3,10 @@ package com.chen.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.chen.common.ReturnType;
+import com.chen.mapper.BidMapper;
 import com.chen.pojo.Account;
 import com.chen.mapper.AccountMapper;
+import com.chen.pojo.Bid;
 import com.chen.pojo.SystemMessage;
 import com.chen.pojo.User;
 import com.chen.service.AccountService;
@@ -37,6 +39,8 @@ public class AccountServiceImpl implements AccountService {
     private SystemMessageSender systemMessageSender;
     @Resource
     private UserGetter userGetter;
+    @Resource
+    private BidMapper bidMapper;
 
     @Override
     public ReturnType putAccount(Account account) {
@@ -105,13 +109,26 @@ public class AccountServiceImpl implements AccountService {
         if(bought != 2) {
             wrapper.eq("bought",bought);
         }
+        // 查询账号
         Page<Account> accountPage = accountMapper.selectPage(queryPage, wrapper);
         long pages = accountPage.getPages();
         List<Account> records = accountPage.getRecords();
+        List<Map<String,Object>> result = new ArrayList<>();
+        // 查询出价
+        for (Account record : records) {
+            Long accountId = record.getAccountId();
+            QueryWrapper<Bid> bidQueryWrapper = new QueryWrapper<>();
+            bidQueryWrapper.eq("account_id",accountId);
+            List<Bid> bids = bidMapper.selectList(bidQueryWrapper);
+            Map<String,Object> innerMap = new HashMap<>();
+            innerMap.put("account",record);
+            innerMap.put("bids",bids);
+            result.add(innerMap);
+        }
         System.out.println("共有"+pages+"页");
         System.out.println(records);
         Map<String,Object> map = new HashMap<>();
-        map.put("accounts",records);
+        map.put("accounts",result);
         map.put("pages",pages);
         return new ReturnType().success(map);
     }
@@ -141,13 +158,25 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public ReturnType offer(Long sellerId, Long accountId, BigDecimal bid) {
+    public ReturnType offer(Long sellerId, Long accountId, BigDecimal amount) {
         Account account = accountMapper.selectById(accountId);
         User buyer = userGetter.getUser();
+        if (account.getBought() == 1) {
+            return new ReturnType().error("账号已被购买");
+        }
+        // 保存到出价表
+        Bid bid = new Bid();
+        bid.setBidId(SnowFlakeUtil.getSnowFlakeId());
+        bid.setAccountId(accountId);
+        bid.setBidderId(buyer.getUserId());
+        bid.setSellerId(sellerId);
+        bid.setAmount(amount);
+        bidMapper.insert(bid);
+        // 给卖家发送提醒
         Map<String,Object> map = new HashMap<>();
         map.put("account",account);
         map.put("buyer",buyer);
-        map.put("bid",bid);
+        map.put("bid",amount);
         SystemMessage message = new SystemMessage(ClientCache.BUYER_OFFER_EVENT,map,new Date());
         systemMessageSender.sendMsgById(sellerId,message);
         return new ReturnType().success();

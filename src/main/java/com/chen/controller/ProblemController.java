@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.RestController;
  * @since 2023-03-22
  */
 @RestController
-@RequestMapping("/chen/problem")
 public class ProblemController {
 
 }

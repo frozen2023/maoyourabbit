@@ -14,6 +14,11 @@ spring:
   redis:
     host: localhost
     port: 6379
+  rabbitmq:
+    host: 8.130.44.99
+    port: 5672
+    username: chen
+    password: 123456
 mybatis-plus:
   configuration:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl

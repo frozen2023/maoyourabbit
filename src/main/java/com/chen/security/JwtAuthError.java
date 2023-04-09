@@ -15,6 +15,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
 
+// 自定义security异常处理
+
 @Component
 public class JwtAuthError implements AuthenticationEntryPoint,AccessDeniedHandler {
     @Override

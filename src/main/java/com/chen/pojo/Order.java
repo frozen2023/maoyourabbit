@@ -17,6 +17,7 @@ import lombok.*;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@TableName("myt_order")
 public class Order implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -27,22 +28,28 @@ public class Order implements Serializable {
     @TableField("buyer_price")
     private BigDecimal buyerPrice;
 
+    @TableField("buyer_id")
+    private Long buyerId;
+
+    @TableField("seller_id")
+    private Long sellerId;
+
     @TableField("account_id")
     private Long accountId;
 
-    @TableField("checked")
+    @TableField("od_checked")
     private Integer checked;
 
-    @TableField("paid")
+    @TableField("od_paid")
     private Integer paid;
 
-    @TableField("cancled")
+    @TableField("od_cancled")
     private Integer cancled;
 
-    @TableField("fav")
+    @TableField("od_fav")
     private Integer fav;
 
-    @TableField("finished")
+    @TableField("od_finished")
     private Integer finished;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
