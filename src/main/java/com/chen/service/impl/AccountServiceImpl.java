@@ -73,7 +73,7 @@ public class AccountServiceImpl implements AccountService {
             log.info("订单号为{}的订单经管理员审核成功",accountId);
             Account acc = accountMapper.selectById(accountId);
             // 给卖家发送系统消息
-            SystemMessage message = new SystemMessage(ClientCache.EXAMINE_PASS_EVENT,acc,new Date());
+            SystemMessage message = SystemMessage.create(ClientCache.EXAMINE_PASS_EVENT,acc);
             systemMessageSender.sendMsgById(sellerId,message);
             return new ReturnType().success();
         } else {
@@ -87,7 +87,7 @@ public class AccountServiceImpl implements AccountService {
         Map<String,Object> data = new HashMap<>();
         data.put("cause",cause);
         data.put("account",account);
-        SystemMessage message = new SystemMessage(ClientCache.EXAMINE_FAIL_EVENT,data,new Date());
+        SystemMessage message = SystemMessage.create(ClientCache.EXAMINE_FAIL_EVENT,data);
         systemMessageSender.sendMsgById(sellerId,message);
         account.setDeleted(1);
         if (accountMapper.deleteById(accountId) > 0) {
@@ -177,7 +177,7 @@ public class AccountServiceImpl implements AccountService {
         map.put("account",account);
         map.put("buyer",buyer);
         map.put("bid",amount);
-        SystemMessage message = new SystemMessage(ClientCache.BUYER_OFFER_EVENT,map,new Date());
+        SystemMessage message = SystemMessage.create(ClientCache.BUYER_OFFER_EVENT,map);
         systemMessageSender.sendMsgById(sellerId,message);
         return new ReturnType().success();
     }

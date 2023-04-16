@@ -110,6 +110,11 @@
             console.log(data);
         });
 
+        socket.on('cancelTransactionEvent', function (data) {
+            output('<span class="username-msg"><font color="blue">'+getNowTime()+'&nbsp;</font>' + data + ' </span>');
+            console.log(data);
+        });
+
         socket.on('disconnect', function () {
             isConnected =false;
             console.log("连接断开");

@@ -10,13 +10,18 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 // SocketIO 资源仓库
 @Component
 public class ClientCache {
-
     public static final String CHAT_EVENT = "chatEvent"; // 聊天事件
     public static final String EXAMINE_PASS_EVENT = "examinePassEvent"; // 账号审核通过事件
     public static final String EXAMINE_FAIL_EVENT = "examineFailEvent"; // 账号审核失败事件
     public static final String BUYER_OFFER_EVENT = "buyerOfferEvent"; // 买家出价事件
     public static final String PAY_EVENT = "payEvent"; // 买家付款事件
     public static final String CHECK_EVENT = "checkEvent"; // 买家验货消息
+    public static final String CANCEL_TRANSACTION_EVENT = "cancelTransactionEvent"; // 卖家决定是否取消订单事件
+
+    public static final Long PAY_EXPIRATION = 10000L;   // 付款消息过期时间
+    public static final Long CHECK_EXPIRATION = 10000L;  // 验货消息过期时间
+    public static final Long CANCEL_TRANSACTION_EXPIRATION = 10000L; // 取消交易过期时间
+
 
     // 离线系统消息暂存
     private static Map<Long, Queue<SystemMessage>> offlineSystemMessages = new ConcurrentHashMap<>();
@@ -60,6 +65,7 @@ public class ClientCache {
         return false;
     }
 
+    // 将离线消息加入队列中
     public void addOfflineSystemMessage(Long receiverId, SystemMessage message) {
         Queue<SystemMessage> queue = offlineSystemMessages.get(receiverId);
         if(Objects.isNull(queue)) {

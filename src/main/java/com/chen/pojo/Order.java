@@ -9,6 +9,8 @@ import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 /**
  * @author Frozen
@@ -18,10 +20,12 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @TableName("myt_order")
+@Document("Order")
 public class Order implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    @Id
     @TableId(value = "order_id",type = IdType.INPUT)
     private Long orderId;
 

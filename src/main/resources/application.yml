@@ -11,6 +11,9 @@ spring:
       enabled: true  #设置开启热部署
       additional-paths: src/main/java #重启目录
       exclude: WEB-INF/**
+  data:
+    mongodb:
+      uri: mongodb://127.0.0.1:27017/test
   redis:
     host: localhost
     port: 6379

@@ -1,11 +1,7 @@
 package com.chen.util;
 
-import org.apache.commons.beanutils.BeanUtils;
-import org.springframework.cglib.beans.BeanMap;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
