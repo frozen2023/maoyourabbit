@@ -147,12 +147,12 @@ public class UserServiceImpl implements UserService {
     @Override
     public ReturnType updateName(String username, String nickname) {
         User user = userGetter.getUser();
-        if (!Objects.isNull(username) && username != "") {
+        if (!Objects.isNull(username) && "".equals(username)) {
             user.setUsername(username);
         } else {
             return new ReturnType().error("用户名不能为空");
         }
-        if (!Objects.isNull(nickname) && nickname != "") {
+        if (!Objects.isNull(nickname) && "".equals(nickname)) {
             user.setNickname(nickname);
         }
         if (userMapper.updateById(user) > 0) {

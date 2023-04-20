@@ -1,6 +1,7 @@
 package com.chen.socketio;
 
 import com.chen.pojo.SystemMessage;
+import com.chen.repository.SystemMessageRepository;
 import com.corundumstudio.socketio.SocketIOClient;
 import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
@@ -15,7 +16,7 @@ public class SystemMessageSender {
     public void sendMsgById(Long id, SystemMessage message) {
         if (clientCache.isOnline(id)) {
             SocketIOClient client = clientCache.getUserClient(id);
-            client.sendEvent(message.getEvent(),message);
+            client.sendEvent(ClientCache.SYSTEM_EVENT,message);
         } else {
             clientCache.addOfflineSystemMessage(id,message);
         }

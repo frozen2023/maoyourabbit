@@ -6,7 +6,9 @@ import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.RequestBody;
 
+import javax.annotation.Resource;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -16,7 +18,7 @@ import java.util.concurrent.TimeUnit;
 public class RedisCache {
 
 
-        @Autowired
+        @Resource
         public RedisTemplate redisTemplate;
 
         /**

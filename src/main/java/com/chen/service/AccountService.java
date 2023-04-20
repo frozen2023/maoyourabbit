@@ -16,6 +16,8 @@ public interface AccountService {
     ReturnType pass(Account account);
     ReturnType fail(Long sellerId, Long accountId, String cause);
     ReturnType getListedAccounts(Integer page, Integer varified, Integer bought);
+    ReturnType updateAccount(Account account);
     ReturnType getPurchasableAccounts(String name, BigDecimal minPrice, BigDecimal maxPrice, String number, Long page);
     ReturnType offer(Long sellerId, Long accountId, BigDecimal bid);
+    ReturnType updatePrice(Account account);
 }

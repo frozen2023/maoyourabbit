@@ -5,10 +5,16 @@ import com.baomidou.mybatisplus.annotation.*;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.List;
 
+import com.chen.util.SnowFlakeUtil;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.sun.org.apache.xerces.internal.dom.PSVIDocumentImpl;
 import io.netty.util.concurrent.ThreadPerTaskExecutor;
 import lombok.*;
+import org.springframework.aop.target.LazyInitTargetSource;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 /**
  * @author Frozen
@@ -16,34 +22,41 @@ import lombok.*;
  */
 @Data
 @AllArgsConstructor
-@NoArgsConstructor
+@Document("Report")
 public class Report implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    @TableId(type = IdType.INPUT)
-    private Long reportId;
+    public static final Integer FIND_ACCOUNT = 1;
+    public static final Integer OTHERS = 2;
+    @Id
+    private Long reportId;  // 举报id
 
-    private Long whistleblowerId;
+    private Long whistleblowerId; // 告发者id
 
-    private Long defendantId;
+    private Long defendantId; // 被告者id
 
-    private String cause;
+    private String cause; // 文本原因
 
-    private Integer handled;
+    private List<String> urls; // 图片url
 
-    private String result;
+    private Integer type; // 类型：找回账号/其他
+
+    private Long orderId; // type =1 时填入
+
+    private Integer handled; // 是否被处理
+
+    private Integer result; // 处理结果
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
-    @TableField(fill = FieldFill.INSERT)
-    private Date mgtCreate;
+    private Date mgtCreate; // 创建时间
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
-    @TableField(fill = FieldFill.INSERT_UPDATE)
-    private Date mgtModify;
+    private Date handlingTime; // 处理时间
 
-    @TableLogic
-    private Integer deleted;
-
-
+    public Report() {
+        this.reportId = SnowFlakeUtil.getSnowFlakeId();
+        this.mgtCreate = new Date();
+        this.handled = 0;
+    }
 }

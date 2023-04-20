@@ -1,35 +1,28 @@
 package com.chen.service.impl;
 
+import com.chen.common.EventMsgs;
+import com.chen.common.OrderStatus;
 import com.chen.common.ReturnType;
 import com.chen.mapper.AccountMapper;
 import com.chen.mapper.ProblemMapper;
 import com.chen.mapper.UserMapper;
 import com.chen.pojo.*;
-import com.chen.mapper.OrderMapper;
 import com.chen.rabbitMQ.DelayQueueConfig;
+import com.chen.repository.OrderRepository;
 import com.chen.service.OrderService;
-import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.chen.socketio.ClientCache;
-import com.chen.socketio.SystemMessageSender;
-import com.chen.util.DecimalUtils;
-import com.chen.util.ProfitUtil;
-import com.chen.util.SnowFlakeUtil;
-import com.chen.util.UserGetter;
-import com.qiniu.rtc.model.MergeParam;
-import javafx.beans.value.ObservableObjectValue;
+import com.chen.util.*;
+import javafx.scene.control.Alert;
+import org.apache.commons.beanutils.BeanUtils;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.data.domain.*;
+import org.springframework.data.redis.connection.SortParameters;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 import javax.annotation.Resource;
-import javax.jws.soap.SOAPBinding;
-import javax.management.ObjectName;
 import java.math.BigDecimal;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * @author Frozen
@@ -43,225 +36,238 @@ public class OrderServiceImpl implements OrderService {
     @Resource
     private AccountMapper accountMapper;
     @Resource
-    private OrderMapper orderMapper;
-    @Resource
-    private SystemMessageSender systemMessageSender;
-    @Resource
     private RabbitTemplate rabbitTemplate;
     @Resource
     private UserMapper userMapper;
     @Resource
     private UserGetter userGetter;
     @Resource
-    private ClientCache clientCache;
-    @Resource
     private ProblemMapper problemMapper;
+    @Resource
+    private OrderRepository orderRepository;
 
     @Override
-    public ReturnType agree(Long accountId, Long buyerId, BigDecimal bid) {
+    public ReturnType buyNow(Long accountId) {
+        Order order = new Order();
+        Long orderId = order.getOrderId();
+        Account account = accountMapper.selectById(accountId);
+        if (account.getBought() == 1)
+            return new ReturnType().error("账号已被购买");
+        Long sellerId = account.getSellerId();
+        Long buyerId = userGetter.getUserId();
+        BigDecimal bid = account.getPrice();
         try {
-            /*
-            * 判断买家是否在线
-            * 只有在买家上线的情况下才能进行下一步操作
-            * */
-            if(!clientCache.isOnline(buyerId)) {
-                return new ReturnType().error("用户已下线");
-            }
-            Account account = accountMapper.selectById(accountId);
-            Long sellerId = userGetter.getUserId();
-            // 防止重复出售
-        /*if (account.getBought() == 1) {
-            return new ReturnType().error("该账号已经出售");
-        }*/
-            // 修改bought值(下架)
+            // 生成订单
+            List<OrderEvent> orderEvents = new ArrayList<>();
+            orderEvents.add(new OrderEvent(EventMsgs.BUYER_GET));
+            order.setAccountId(accountId);
+            order.setOrderEvents(orderEvents);
+            order.setStatus(OrderStatus.AWAITING_PAY);
+            order.setSellerId(sellerId);
+            order.setBuyerId(buyerId);
+            order.setBid(bid);
+            orderRepository.save(order);
+            // 下架账号
             account.setBought(1);
             accountMapper.updateById(account);
-            // 将订单存入订单表中
-            Order order = new Order();
-            order.setOrderId(SnowFlakeUtil.getSnowFlakeId());
-            order.setBuyerPrice(bid);
-            order.setAccountId(accountId);
-            order.setBuyerId(buyerId);
-            order.setSellerId(sellerId);
-            orderMapper.insert(order);
-            // 给买家发送付款消息
-            Map<String,Object> data = new HashMap<>();
-            data.put("account",account);
-            data.put("orderId",order.getOrderId());
-            SystemMessage systemMessage = SystemMessage.create(ClientCache.PAY_EVENT,data);
-            systemMessageSender.sendMsgById(buyerId,systemMessage);
-            // 将取消订单消息加入消息队列
-            rabbitTemplate.convertAndSend(DelayQueueConfig.NORMAL_EXCHANGE,DelayQueueConfig.CANCEL_ORDER_DELAY_ROUTING_KEY,order);
-            return new ReturnType().success();
+            // 取消订单消息加入延时队列
+            rabbitTemplate.convertAndSend(DelayQueueConfig.NORMAL_EXCHANGE,DelayQueueConfig.CANCEL_ORDER_DELAY_ROUTING_KEY,orderId);
+            Map<String,Object> map = new HashMap<>();
+            map.put("order",order);
+            return new ReturnType().success(map);
         } catch (Exception e) {
-            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly(); // 手动回滚
+            e.printStackTrace();
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            orderRepository.deleteById(orderId);
             return new ReturnType().error();
         }
     }
 
     @Override
-    public ReturnType payment(Long orderId) {
+    public ReturnType pay(Long orderId) {
+        Order order = orderRepository.findById(orderId).get();
+        // 备份最初的状态
+        Order preOrder = CloneUtil.deepClone(order);
         try {
-            Order order = orderMapper.selectById(orderId);
-            // 用户掉线,10分钟后订单自动取消
-            if (Objects.isNull(order)) {
-                return new ReturnType().error("订单已取消");
-            }
-            BigDecimal bid = order.getBuyerPrice();
-            Long accountId = order.getAccountId();
             Long buyerId = order.getBuyerId();
+            BigDecimal bid = order.getBid();
+            User buyer = userMapper.selectById(buyerId);
+            BigDecimal balance = buyer.getBalance();
+            Long accountId = order.getAccountId();
             Account account = accountMapper.selectById(accountId);
-            User user = userMapper.selectById(buyerId);
-            BigDecimal balance = user.getBalance();
+            // 是否自动取消了
+            if(order.getPaid() == 1) {
+                return new ReturnType().error();
+            }
             // 买家余额减少
             balance = DecimalUtils.subtract(balance,bid);
-            user.setBalance(balance);
-            userMapper.updateById(user);
-            // 已付款
+            buyer.setBalance(balance);
+            userMapper.updateById(buyer);
+            // 修改订单状态
             order.setPaid(1);
-            orderMapper.updateById(order);
-            // 验货消息加入延时队列
-            rabbitTemplate.convertAndSend(DelayQueueConfig.NORMAL_EXCHANGE,DelayQueueConfig.CHECK_ORDER_DELAY_ROUTING_KEY,order);
-            // 给买家发送验货消息
+            order.setStatus(OrderStatus.AWAITING_CHECK);
+            List<OrderEvent> orderEvents = order.getOrderEvents();
+            orderEvents.add(new OrderEvent(EventMsgs.BUYER_PAY));
+            orderEvents.add(new OrderEvent(account));
+            orderRepository.save(order);
+            // 自动确认消息加入延时队列
+            rabbitTemplate.convertAndSend(DelayQueueConfig.NORMAL_EXCHANGE,DelayQueueConfig.CHECK_ORDER_DELAY_ROUTING_KEY,orderId);
             Map<String,Object> map = new HashMap<>();
-            map.put("account",account);
-            map.put("orderId",orderId);
-            SystemMessage systemMessage = SystemMessage.create(ClientCache.CHECK_EVENT,map);
-            systemMessageSender.sendMsgById(buyerId,systemMessage);
-            return new ReturnType().success();
+            map.put("order",order);
+            return new ReturnType().success(map);
         } catch (Exception e) {
-            // 事务回滚
+            e.printStackTrace();
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            orderRepository.save(preOrder);
             return new ReturnType().error();
         }
+
     }
 
     @Override
-    public ReturnType noPayment(Long orderId) {
+    public ReturnType cancelOrder(Long orderId) {
+        Order order = orderRepository.findById(orderId).get();
+        Order preOrder = CloneUtil.deepClone(order);
         try {
-            Order order = orderMapper.selectById(orderId);
-            if (Objects.isNull(order)) {
-                return new ReturnType().error("订单已取消");
+            // 是否自动取消了
+            if(order.getPaid() == 1) {
+                return new ReturnType().error();
             }
-            cancelOrderImpl(order);
-            return new ReturnType().success();
+            // 修改订单状态
+            order.setPaid(1);
+            order.setStatus(OrderStatus.CANCEL);
+            List<OrderEvent> orderEvents = order.getOrderEvents();
+            orderEvents.add(new OrderEvent(EventMsgs.BUYER_CANCEL_ORDER));
+            orderRepository.save(order);
+            Map<String,Object> map = new HashMap<>();
+            map.put("order",order);
+            return new ReturnType().success(map);
         } catch (Exception e) {
-            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            e.printStackTrace();
+            orderRepository.save(preOrder);
             return new ReturnType().error();
         }
-    }
-
-    @Override
-    public void cancelOrderImpl(Order order) {
-        Long orderId = order.getOrderId();
-        Long accountId = order.getAccountId();
-        // 账号上架
-        Account account = new Account();
-        account.setAccountId(accountId);
-        account.setBought(0);
-        accountMapper.updateById(account);
-        // 删除订单
-        orderMapper.deleteById(orderId);
     }
 
     @Override
     public ReturnType checkOrder(Long orderId) {
+        Order order = orderRepository.findById(orderId).get();
+        Order preOrder = CloneUtil.deepClone(order);
         try {
-            Order order = orderMapper.selectById(orderId);
-            // 订单已经自动确认
-            if (order.getChecked() == 1) {
-                return new ReturnType().error("订单已自动确认");
+            // 是否已自动确认
+            if(order.getChecked() == 1) {
+                return new ReturnType().error();
             }
-            checkOrderImpl(order);
-            return new ReturnType().success();
+            // 修改订单状态
+            order.setChecked(1);
+            order.setFinished(1);
+            order.setStatus(OrderStatus.FINISH);
+            List<OrderEvent> orderEvents = order.getOrderEvents();
+            orderEvents.add(new OrderEvent(EventMsgs.BUYER_CHECK));
+            orderRepository.save(order);
+            // 卖家余额增长
+            Long sellerId = order.getSellerId();
+            User seller = userMapper.selectById(sellerId);
+            BigDecimal balance = seller.getBalance();
+            BigDecimal bid = order.getBid();
+            BigDecimal finalProfit = ProfitUtil.getFinalProfit(balance, bid);
+            seller.setBalance(finalProfit);
+            userMapper.updateById(seller);
+            Map<String,Object> map = new HashMap<>();
+            map.put("order",order);
+            return new ReturnType().success(map);
         } catch (Exception e) {
+            e.printStackTrace();
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            orderRepository.save(preOrder);
             return new ReturnType().error();
         }
     }
 
     @Override
-    public void checkOrderImpl(Order order) {
-        Long sellerId = order.getSellerId();
-        User user = userMapper.selectById(sellerId);
-        // 修改订单验货状态
-        order.setChecked(1);
-        order.setFinished(1);
-        orderMapper.updateById(order);
-        // 卖家余额增长
-        BigDecimal finalAmount = ProfitUtil.getFinalProfit(user.getBalance(),order.getBuyerPrice());
-        user.setBalance(finalAmount);
-        userMapper.updateById(user);
-    }
-
-    @Override
-    public ReturnType uncheckOrder(Long orderId) {
+    public ReturnType rejectCheck(Long orderId) {
+        Order order = orderRepository.findById(orderId).get();
+        Order preOrder = CloneUtil.deepClone(order);
         try {
-            Order order = orderMapper.selectById(orderId);
-            // 订单已经自动确认
-            if (order.getChecked() == 1) {
-                return new ReturnType().error("订单已自动确认");
+            // 是否已自动确认
+            if(order.getChecked() == 1) {
+                return new ReturnType().error();
             }
-            Long accountId = order.getAccountId();
-            Account account = accountMapper.selectById(accountId);
-            Long sellerId = order.getSellerId();
-            // 更改处理状态
+            // 更改订单状态
             order.setChecked(1);
-            orderMapper.updateById(order);
-            // 将取消交易消息加入延时队列
-            rabbitTemplate.convertAndSend(DelayQueueConfig.NORMAL_EXCHANGE,DelayQueueConfig.CANCEL_TRANSACTION_DELAY_ROUTING_KEY,order);
-            // 给卖家发送取消交易系统消息
-            Map<String,Object> data = new HashMap<>();
-            data.put("orderId",orderId);
-            data.put("account",account);
-            SystemMessage systemMessage = SystemMessage.create(ClientCache.CANCEL_TRANSACTION_EVENT,data);
-            systemMessageSender.sendMsgById(sellerId,systemMessage);
-            return new ReturnType().success();
+            order.setStatus(OrderStatus.AWAITING_INSPECT);
+            List<OrderEvent> orderEvents = order.getOrderEvents();
+            orderEvents.add(new OrderEvent(EventMsgs.BUYER_CHECK_REJECT));
+            orderRepository.save(order);
+            // 取消交易消息加入延时队列
+            rabbitTemplate.convertAndSend(DelayQueueConfig.NORMAL_EXCHANGE,DelayQueueConfig.CANCEL_TRANSACTION_DELAY_ROUTING_KEY,orderId);
+            Map<String,Object> map = new HashMap<>();
+            map.put("order",order);
+            return new ReturnType().success(map);
         } catch (Exception e) {
+            e.printStackTrace();
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            orderRepository.save(preOrder);
             return new ReturnType().error();
         }
     }
 
     @Override
     public ReturnType cancelTransaction(Long orderId) {
+        Order order = orderRepository.findById(orderId).get();
+        Order preOrder = CloneUtil.deepClone(order);
         try {
-            Order order = orderMapper.selectById(orderId);
-            if (Objects.isNull(order)) {
-                return new ReturnType().error("订单已取消");
+            // 是否已自动操作
+            if(order.getCanceled() == 1) {
+                return new ReturnType().error();
             }
-            cancelTransactionImpl(order);
-            return new ReturnType().success();
+            // 修改订单状态
+            order.setCanceled(1);
+            order.setStatus(OrderStatus.CANCEL);
+            List<OrderEvent> orderEvents = order.getOrderEvents();
+            orderEvents.add(new OrderEvent(EventMsgs.SELLER_CANCEL_TRANSACTION));
+            orderRepository.save(order);
+            // 账号解冻
+            Long accountId = order.getAccountId();
+            Account account = new Account();
+            account.setAccountId(accountId);
+            account.setBought(0);
+            accountMapper.updateById(account);
+            // 返还余额
+            Long userId = order.getBuyerId();
+            BigDecimal bid = order.getBid();
+            User user = userMapper.selectById(userId);
+            BigDecimal balance = user.getBalance();
+            balance = DecimalUtils.add(balance,bid);
+            user.setBalance(balance);
+            userMapper.updateById(user);
+            Map<String,Object> map = new HashMap<>();
+            map.put("order",order);
+            return new ReturnType().success(map);
         } catch (Exception e) {
+            e.printStackTrace();
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            orderRepository.save(preOrder);
             return new ReturnType().error();
         }
     }
 
     @Override
-    public void cancelTransactionImpl(Order order) {
-        Long orderId = order.getOrderId();
-        // 取消订单
-        orderMapper.deleteById(orderId);
-        // 账号解冻
-        Long accountId = order.getAccountId();
-        Account account = new Account();
-        account.setAccountId(accountId);
-        account.setBought(0);
-        accountMapper.updateById(account);
-        // 返还余额
-        Long userId = order.getBuyerId();
-        BigDecimal bid = order.getBuyerPrice();
-        User user = userMapper.selectById(userId);
-        BigDecimal balance = user.getBalance();
-        balance = DecimalUtils.add(balance,bid);
-        user.setBalance(balance);
-        userMapper.updateById(user);
-    }
-
-    @Override
     public ReturnType rejectCancelTransaction(Long orderId, String detail) {
+        Order order = orderRepository.findById(orderId).get();
+        Order preOrder = CloneUtil.deepClone(order);
         try {
+            // 是否已自动操作
+            if(order.getCanceled() == 1) {
+                return new ReturnType().error();
+            }
+            // 修改订单状态
+            order.setCanceled(1);
+            order.setStatus(OrderStatus.AWAITING_DEAL);
+            List<OrderEvent> orderEvents = order.getOrderEvents();
+            orderEvents.add(new OrderEvent(EventMsgs.SELLER_CANCEL_TRANSACTION_REJECT));
+            orderRepository.save(order);
+            // 提交问题至管理员
             Long userId = userGetter.getUserId();
             Problem problem = new Problem();
             problem.setProblemId(SnowFlakeUtil.getSnowFlakeId());
@@ -269,10 +275,39 @@ public class OrderServiceImpl implements OrderService {
             problem.setDetail(detail);
             problemMapper.insert(problem);
             System.out.println("id为" + userId + "的用户提交了一个账号问题");
-            return new ReturnType().success();
+            Map<String,Object> map = new HashMap<>();
+            map.put("order",order);
+            return new ReturnType().success(map);
         } catch (Exception e) {
+            e.printStackTrace();
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            orderRepository.save(preOrder);
             return new ReturnType().error();
         }
+    }
+
+    @Override
+    public ReturnType getOrders(Integer type, Integer finished, Integer page) {
+        // 按时间排序并分页
+        Sort sort = Sort.by(Sort.Direction.DESC, "mgtCreate");
+        if (page == 0)
+            return new ReturnType().error();
+        page = page - 1;
+        Pageable pageable = PageRequest.of(page,5,sort);
+        Long userId = userGetter.getUserId();
+        Map<String,Object> data = new HashMap<>();
+        Page<Order> orderPage = null;
+        // 已购买
+        if(type == 1) {
+            orderPage = orderRepository.findAllByBuyerIdAndFinished(userId, finished, pageable);
+        } else {
+            // 已出售
+            orderPage = orderRepository.findAllBySellerIdAndFinished(userId, finished, pageable);
+        }
+        int totalPages = orderPage.getTotalPages();
+        List<Order> orders = orderPage.getContent();
+        data.put("orders",orders);
+        data.put("totalPages",totalPages);
+        return new ReturnType().success(data);
     }
 }

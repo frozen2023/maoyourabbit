@@ -16,14 +16,12 @@ import java.math.BigDecimal;
  * @since 2023-03-22
  */
 public interface OrderService {
-    ReturnType agree(Long accountId, Long buyerId, BigDecimal bid);
-    ReturnType payment(Long orderId);
-    ReturnType noPayment(Long orderId);
+    ReturnType buyNow(Long accountId);
+    ReturnType pay(Long orderId);
+    ReturnType cancelOrder(Long orderId);
     ReturnType checkOrder(Long orderId);
-    ReturnType uncheckOrder(Long orderId);
+    ReturnType rejectCheck(Long orderId);
     ReturnType cancelTransaction(Long orderId);
     ReturnType rejectCancelTransaction(Long orderId, String detail);
-    void cancelTransactionImpl(Order order);
-    void checkOrderImpl(Order order);
-    void cancelOrderImpl(Order order);
+    ReturnType getOrders(Integer type, Integer finished, Integer page);
 }

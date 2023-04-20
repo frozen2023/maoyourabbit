@@ -27,13 +27,13 @@ public class UserController {
 
     // 注册
     @PostMapping("/user/register")
-    public ReturnType register(@Validated @RequestBody User user) {
+    public ReturnType register(@RequestBody User user) {
         return userService.register(user);
     }
 
     // 登录
     @PostMapping("/user/login")
-    public ReturnType login(@Validated @RequestBody User user) {
+    public ReturnType login(@RequestBody User user) {
         return userService.login(user);
     }
 

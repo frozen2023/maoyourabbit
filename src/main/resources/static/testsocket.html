@@ -84,6 +84,10 @@
             output('<span class="username-msg"><font color="blue">'+getNowTime()+'&nbsp;</font>' + data + ' </span>');
             console.log(data.info);
         });
+        socket.on('systemEvent', function (data) {
+            output('<span class="username-msg"><font color="blue">'+getNowTime()+'&nbsp;</font>' + data + ' </span>');
+            console.log(data);
+        });
 
         socket.on('examinePassEvent', function (data) {
             output('<span class="username-msg"><font color="blue">'+getNowTime()+'&nbsp;</font>' + data + ' </span>');

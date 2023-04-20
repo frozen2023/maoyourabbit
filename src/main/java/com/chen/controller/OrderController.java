@@ -3,13 +3,10 @@ package com.chen.controller;
 import com.chen.common.ReturnType;
 import com.chen.security.annotations.IsUser;
 import com.chen.service.OrderService;
-import com.chen.util.DecimalUtils;
 import com.chen.util.ObjectUtils;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
 import javax.annotation.Resource;
-import java.math.BigDecimal;
 import java.util.Map;
 
 /**
@@ -21,30 +18,28 @@ public class OrderController {
     @Resource
     private OrderService orderService;
 
-    // 卖家同意
+    // 立即购买
     @IsUser
-    @PostMapping("/order/agree")
-    public ReturnType agree(@RequestBody Map map) {
+    @PostMapping("/order/buy-now")
+    public ReturnType buyNow(@RequestBody Map map) {
         Long accountId = ObjectUtils.toLong(map.get("accountId"));
-        Long buyerId = ObjectUtils.toLong(map.get("buyerId"));
-        BigDecimal bid = DecimalUtils.toBigDecimal(map.get("bid"));
-        return orderService.agree(accountId,buyerId,bid);
+        return orderService.buyNow(accountId);
     }
 
-    // 卖家付款
+    // 买家付款
     @IsUser
     @PostMapping("/order/pay")
-    public ReturnType payment(@RequestBody Map map) {
+    public ReturnType pay(@RequestBody Map map) {
         Long orderId = ObjectUtils.toLong(map.get("orderId"));
-        return orderService.payment(orderId);
+        return orderService.pay(orderId);
     }
 
-    // 买家拒绝付款
+    // 买家取消订单
     @IsUser
-    @PostMapping("/order/pay/reject")
-    public ReturnType noPayment(@RequestBody Map map) {
+    @PostMapping("/order/cancel")
+    public ReturnType cancelOrder(@RequestBody Map map) {
         Long orderId = ObjectUtils.toLong(map.get("orderId"));
-        return orderService.noPayment(orderId);
+        return orderService.cancelOrder(orderId);
     }
 
     // 买家确认收货
@@ -58,14 +53,14 @@ public class OrderController {
     // 买家拒绝收货
     @IsUser
     @PostMapping("/order/check/reject")
-    public ReturnType uncheckOrder(@RequestBody Map map) {
+    public ReturnType rejectCheck(@RequestBody Map map) {
         Long orderId = ObjectUtils.toLong(map.get("orderId"));
-        return orderService.uncheckOrder(orderId);
+        return orderService.rejectCheck(orderId);
     }
 
-    // 卖家主动取消交易
+    // 卖家取消交易
     @IsUser
-    @PostMapping("/order/cancel")
+    @PostMapping("/order/cancelTransaction")
     public ReturnType cancelTransaction(@RequestBody Map map) {
         Long orderId = ObjectUtils.toLong(map.get("orderId"));
         return orderService.cancelTransaction(orderId);
@@ -73,12 +68,19 @@ public class OrderController {
 
     // 卖家拒绝取消
     @IsUser
-    @PostMapping("/order/cancel/reject")
+    @PostMapping("/order/cancelTransaction/reject")
     public ReturnType rejectCancelTransaction(@RequestBody Map map) {
         Long orderId = ObjectUtils.toLong(map.get("orderId"));
         String detail = ObjectUtils.toString(map.get("detail"));
         return orderService.rejectCancelTransaction(orderId,detail);
     }
 
-
+    // 获取订单
+    @IsUser
+    @GetMapping("/order/{type}/{finished}/{page}")
+    public ReturnType getOrders(@PathVariable("type") Integer type,
+                                @PathVariable("finished") Integer finished,
+                                @PathVariable("page") Integer page) {
+        return orderService.getOrders(type,finished,page);
+    }
 }

@@ -6,18 +6,11 @@ import com.chen.security.annotations.IsAdmin;
 import com.chen.security.annotations.IsUser;
 import com.chen.service.AccountService;
 import com.chen.util.DecimalUtils;
-import com.chen.util.ObjectUtils;
-import io.lettuce.core.api.push.PushListener;
-import io.lettuce.core.dynamic.output.CodecAwareOutputFactoryResolver;
-import org.springframework.validation.BindingResult;
-import org.springframework.validation.annotation.Validated;
+import com.chen.util.ObjectUtils;;
 import org.springframework.web.bind.annotation.*;
-
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * @author Frozen
@@ -68,6 +61,13 @@ public class AccountController {
         return accountService.getListedAccounts(page,varified,bought);
     }
 
+    // 卖家修改账号信息
+    @IsUser
+    @PutMapping("/account")
+    public ReturnType updateAccount(@RequestBody Account account) {
+        return accountService.updateAccount(account);
+    }
+
     // 买家获取账号列表
     @IsUser
     @PostMapping("/account/buyer")
@@ -89,5 +89,12 @@ public class AccountController {
         Long accountId = ObjectUtils.toLong(map.get("accountId"));
         BigDecimal bid = DecimalUtils.toBigDecimal(map.get("bid"),2);
         return accountService.offer(sellerId,accountId,bid);
+    }
+
+    // 卖家改价
+    @IsUser
+    @PutMapping("/account/price")
+    public ReturnType updatePrice(@RequestBody Account account) {
+        return accountService.updatePrice(account);
     }
 }

@@ -32,15 +32,18 @@ public class Problem implements Serializable {
     @TableField("solved")
     private Integer solved;
 
+    @TableField("level")
+    private Double level;
+
     @TableField("agreed")
     private Integer agreed;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
-    @TableField(value = "gmt_create",fill = FieldFill.INSERT)
+    @TableField(value = "mgt_create",fill = FieldFill.INSERT)
     private Date mgtCreate;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
-    @TableField(value = "gmt_modify",fill = FieldFill.INSERT_UPDATE)
+    @TableField(value = "mgt_modify",fill = FieldFill.INSERT_UPDATE)
     private Date mgtModify;
 
     @TableField("deleted")

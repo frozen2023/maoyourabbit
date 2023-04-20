@@ -86,4 +86,20 @@ public class ImageUtils {
         }
         return null;
     }
+
+    public List<String> uploadImages(MultipartFile[] multipartFiles) {
+        List<String> urlList = new ArrayList<>();
+        try {
+            for (int i = 0; i < multipartFiles.length; i++) {
+                byte[] fileBytes = multipartFiles[i].getBytes();
+                String filename = multipartFiles[i].getOriginalFilename();
+                String url = uploadImage(fileBytes, filename);
+                urlList.add(url);
+            }
+            return urlList;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 }

@@ -14,12 +14,13 @@ import com.chen.socketio.ClientCache;
 import com.chen.socketio.SystemMessageSender;
 import com.chen.util.SnowFlakeUtil;
 import com.chen.util.UserGetter;
-import com.sun.javafx.collections.MappingChange;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
+
 import javax.annotation.Resource;
-import java.io.ObjectStreamClass;
 import java.math.BigDecimal;
 import java.util.*;
 
@@ -29,6 +30,7 @@ import java.util.*;
  */
 @Slf4j
 @Service
+@Transactional(rollbackFor = Exception.class)
 public class AccountServiceImpl implements AccountService {
 
     @Resource
@@ -73,8 +75,14 @@ public class AccountServiceImpl implements AccountService {
             log.info("订单号为{}的订单经管理员审核成功",accountId);
             Account acc = accountMapper.selectById(accountId);
             // 给卖家发送系统消息
-            SystemMessage message = SystemMessage.create(ClientCache.EXAMINE_PASS_EVENT,acc);
-            systemMessageSender.sendMsgById(sellerId,message);
+            SystemMessage systemMessage = new SystemMessage();
+            systemMessage.setType(SystemMessage.ACCOUNT_VERIFY_RESULT);
+            systemMessage.setReceiverId(sellerId);
+            Map<String,Object> data = new HashMap<>();
+            data.put("account",acc);
+            data.put("result",1);
+            systemMessage.setData(data);
+            systemMessageSender.sendMsgById(sellerId,systemMessage);
             return new ReturnType().success();
         } else {
             return new ReturnType().error();
@@ -87,8 +95,14 @@ public class AccountServiceImpl implements AccountService {
         Map<String,Object> data = new HashMap<>();
         data.put("cause",cause);
         data.put("account",account);
-        SystemMessage message = SystemMessage.create(ClientCache.EXAMINE_FAIL_EVENT,data);
-        systemMessageSender.sendMsgById(sellerId,message);
+        SystemMessage systemMessage = new SystemMessage();
+        systemMessage.setType(SystemMessage.ACCOUNT_VERIFY_RESULT);
+        systemMessage.setReceiverId(sellerId);
+        Map<String,Object> map = new HashMap<>();
+        data.put("account",account);
+        data.put("result",0);
+        systemMessage.setData(map);
+        systemMessageSender.sendMsgById(sellerId,systemMessage);
         account.setDeleted(1);
         if (accountMapper.deleteById(accountId) > 0) {
             return new ReturnType().success();
@@ -134,6 +148,18 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+    public ReturnType updateAccount(Account account) {
+        try {
+            account.setVarified(0);
+            accountMapper.updateById(account);
+            return new ReturnType().success();
+        } catch (Exception e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            return new ReturnType().error();
+        }
+    }
+
+    @Override
     public ReturnType getPurchasableAccounts(String name, BigDecimal minPrice, BigDecimal maxPrice, String number, Long page) {
         QueryWrapper<Account> wrapper = new QueryWrapper<>();
         Page<Account> queryPage = new Page<>(page,5);
@@ -146,6 +172,7 @@ public class AccountServiceImpl implements AccountService {
         if(!Objects.isNull(number))
                 wrapper.eq("account_number",number);
         wrapper.eq("bought",0);
+        wrapper.eq("varified",1);
         Page<Account> accountPage = accountMapper.selectPage(queryPage, wrapper);
         long pages = accountPage.getPages();
         List<Account> records = accountPage.getRecords();
@@ -159,26 +186,35 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public ReturnType offer(Long sellerId, Long accountId, BigDecimal amount) {
-        Account account = accountMapper.selectById(accountId);
-        User buyer = userGetter.getUser();
-        if (account.getBought() == 1) {
-            return new ReturnType().error("账号已被购买");
+        try {
+            Account account = accountMapper.selectById(accountId);
+            User buyer = userGetter.getUser();
+            if (account.getBought() == 1) {
+                return new ReturnType().error("账号已被购买");
+            }
+            // 保存到出价表
+            Bid bid = new Bid();
+            bid.setBidId(SnowFlakeUtil.getSnowFlakeId());
+            bid.setAccountId(accountId);
+            bid.setBidderId(buyer.getUserId());
+            bid.setSellerId(sellerId);
+            bid.setAmount(amount);
+            bidMapper.insert(bid);
+            return new ReturnType().success();
+        } catch (Exception e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            return new ReturnType().error();
         }
-        // 保存到出价表
-        Bid bid = new Bid();
-        bid.setBidId(SnowFlakeUtil.getSnowFlakeId());
-        bid.setAccountId(accountId);
-        bid.setBidderId(buyer.getUserId());
-        bid.setSellerId(sellerId);
-        bid.setAmount(amount);
-        bidMapper.insert(bid);
-        // 给卖家发送提醒
-        Map<String,Object> map = new HashMap<>();
-        map.put("account",account);
-        map.put("buyer",buyer);
-        map.put("bid",amount);
-        SystemMessage message = SystemMessage.create(ClientCache.BUYER_OFFER_EVENT,map);
-        systemMessageSender.sendMsgById(sellerId,message);
-        return new ReturnType().success();
+    }
+
+    @Override
+    public ReturnType updatePrice(Account account) {
+        try {
+            accountMapper.updateById(account);
+            return new ReturnType().success();
+        } catch (Exception e) {
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            return new ReturnType().error();
+        }
     }
 }

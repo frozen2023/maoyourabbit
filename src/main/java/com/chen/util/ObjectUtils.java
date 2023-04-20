@@ -30,17 +30,12 @@ public class ObjectUtils {
         return Integer.valueOf(o.toString());
     }
 
-    public static <T> T mapToObj(Map source,Class<T> target) throws Exception {
-        Field[] fields = target.getDeclaredFields();
-        T o = target.newInstance();
-        for(Field field:fields){
-            Object val;
-            if((val=source.get(field.getName()))!=null){
-                field.setAccessible(true);
-                field.set(o,val);
-            }
+    public static Double toDouble(Object o) {
+        if (Objects.isNull(o)) {
+            return null;
         }
-        return o;
+        return Double.valueOf(o.toString());
     }
+
 
 }

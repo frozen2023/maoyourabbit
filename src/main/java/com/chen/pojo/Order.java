@@ -1,12 +1,11 @@
 package com.chen.pojo;
 
-import com.baomidou.mybatisplus.annotation.*;
-
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.List;
 
+import com.chen.util.SnowFlakeUtil;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.*;
 import org.springframework.data.annotation.Id;
@@ -18,55 +17,47 @@ import org.springframework.data.mongodb.core.mapping.Document;
  */
 @Data
 @AllArgsConstructor
-@NoArgsConstructor
-@TableName("myt_order")
 @Document("Order")
 public class Order implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    public Order() {
+        orderId = SnowFlakeUtil.getSnowFlakeId();
+        checked = 0;
+        paid = 0;
+        canceled = 0;
+        fav = 0;
+        finished = 0;
+        mgtCreate = new Date();
+    }
+
     @Id
-    @TableId(value = "order_id",type = IdType.INPUT)
     private Long orderId;
 
-    @TableField("buyer_price")
-    private BigDecimal buyerPrice;
-
-    @TableField("buyer_id")
-    private Long buyerId;
-
-    @TableField("seller_id")
-    private Long sellerId;
-
-    @TableField("account_id")
     private Long accountId;
 
-    @TableField("od_checked")
+    private Long buyerId;
+
+    private Long sellerId;
+
+    private BigDecimal bid;
+
     private Integer checked;
 
-    @TableField("od_paid")
     private Integer paid;
 
-    @TableField("od_cancled")
-    private Integer cancled;
+    private Integer canceled;
 
-    @TableField("od_fav")
     private Integer fav;
 
-    @TableField("od_finished")
     private Integer finished;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
-    @TableField(value = "mgt_create",fill = FieldFill.INSERT)
     private Date mgtCreate;
 
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
-    @TableField(value = "mgt_modify",fill = FieldFill.INSERT_UPDATE)
-    private Date mgtModify;
+    private String status;
 
-    @TableField("deleted")
-    @TableLogic
-    private Integer deleted;
-
+    private List<OrderEvent> orderEvents;
 
 }

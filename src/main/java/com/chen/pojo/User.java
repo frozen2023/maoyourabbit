@@ -24,11 +24,9 @@ public class User implements Serializable {
 
     @TableId(type = IdType.INPUT)
     private Long userId; //id
-
-    @NotNull
+    
     private String password; //账号
 
-    @NotNull
     private String username; //密码
 
     private String nickname; //昵称
