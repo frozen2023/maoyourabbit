@@ -1,23 +1,21 @@
 package com.chen.pojo;
 
-import com.baomidou.mybatisplus.annotation.*;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.io.Serializable;
 import java.util.Date;
 
 @Data
 @AllArgsConstructor
-@NoArgsConstructor
+@Document("ChatMessage")
 public class ChatMessage implements Serializable {
 
     private static final long serialVersionUID = 1L;
-
-    @TableId(type = IdType.INPUT)
-    private Long messageId; // 消息id
+    public static final Integer TYPE_TEXT = 1;
+    public static final Integer TYPE_IMAGE = 2;
 
     private Long senderId; // 发送方id
 
@@ -29,12 +27,10 @@ public class ChatMessage implements Serializable {
 
     private String imageUrl; // 保存到服务器后的url
 
-    private Integer viewed; // 1 已读 2未读
-
-    @TableField(fill = FieldFill.INSERT)
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
     private Date mgtCreate; // 发送时间
 
-    @TableLogic
-    private Integer deleted;
+    public ChatMessage() {
+        this.mgtCreate = new Date();
+    }
 }

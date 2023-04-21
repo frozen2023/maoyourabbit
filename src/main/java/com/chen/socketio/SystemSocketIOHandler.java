@@ -19,7 +19,7 @@ public class SystemSocketIOHandler {
 
     @OnConnect
     public void connect(SocketIOClient client) {
-        sendOfflineMessage(client);
+        sendOfflineSystemMessages(client);
     }
 
     public Long getUserIdByClient(SocketIOClient client) {
@@ -27,10 +27,10 @@ public class SystemSocketIOHandler {
         return Long.valueOf(userId);
     }
 
-    public void sendOfflineMessage(SocketIOClient client) {
+    public void sendOfflineSystemMessages(SocketIOClient client) {
         int cnt = 0;
         Long userId = getUserIdByClient(client);
-        Queue<SystemMessage> msgQueue = clientCache.getOfflineMessageQueue(userId);
+        Queue<SystemMessage> msgQueue = clientCache.getOfflineSystemMessageQueue(userId);
         if(Objects.isNull(msgQueue) || msgQueue.size() == 0)
             return;
         int length = msgQueue.size();

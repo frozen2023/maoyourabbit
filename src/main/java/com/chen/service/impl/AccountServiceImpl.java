@@ -1,17 +1,14 @@
 package com.chen.service.impl;
 
+import ch.qos.logback.core.pattern.color.MagentaCompositeConverter;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.chen.common.ReturnType;
 import com.chen.mapper.BidMapper;
-import com.chen.pojo.Account;
+import com.chen.pojo.*;
 import com.chen.mapper.AccountMapper;
-import com.chen.pojo.Bid;
-import com.chen.pojo.SystemMessage;
-import com.chen.pojo.User;
 import com.chen.service.AccountService;
-import com.chen.socketio.ClientCache;
-import com.chen.socketio.SystemMessageSender;
+import com.chen.socketio.MessageSender;
 import com.chen.util.SnowFlakeUtil;
 import com.chen.util.UserGetter;
 import lombok.extern.slf4j.Slf4j;
@@ -38,7 +35,7 @@ public class AccountServiceImpl implements AccountService {
     @Resource
     private PasswordEncoder passwordEncoder;
     @Resource
-    private SystemMessageSender systemMessageSender;
+    private MessageSender messageSender;
     @Resource
     private UserGetter userGetter;
     @Resource
@@ -82,7 +79,7 @@ public class AccountServiceImpl implements AccountService {
             data.put("account",acc);
             data.put("result",1);
             systemMessage.setData(data);
-            systemMessageSender.sendMsgById(sellerId,systemMessage);
+            messageSender.sendSystemMessageById(sellerId,systemMessage);
             return new ReturnType().success();
         } else {
             return new ReturnType().error();
@@ -102,7 +99,7 @@ public class AccountServiceImpl implements AccountService {
         data.put("account",account);
         data.put("result",0);
         systemMessage.setData(map);
-        systemMessageSender.sendMsgById(sellerId,systemMessage);
+        messageSender.sendSystemMessageById(sellerId,systemMessage);
         account.setDeleted(1);
         if (accountMapper.deleteById(accountId) > 0) {
             return new ReturnType().success();
@@ -216,5 +213,16 @@ public class AccountServiceImpl implements AccountService {
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return new ReturnType().error();
         }
+    }
+
+    @Override
+    public ReturnType getAccountById(Long accountId) {
+        Account account = accountMapper.selectById(accountId);
+        if (Objects.isNull(account)) {
+            return new ReturnType().error("未找到该账号");
+        }
+        Map<String,Object> data = new HashMap<>();
+        data.put("account",account);
+        return new ReturnType().success(data);
     }
 }

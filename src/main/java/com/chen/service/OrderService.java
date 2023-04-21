@@ -24,4 +24,5 @@ public interface OrderService {
     ReturnType cancelTransaction(Long orderId);
     ReturnType rejectCancelTransaction(Long orderId, String detail);
     ReturnType getOrders(Integer type, Integer finished, Integer page);
+    ReturnType getOrderById(Long orderId);
 }

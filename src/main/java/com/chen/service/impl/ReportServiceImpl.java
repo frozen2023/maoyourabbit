@@ -9,7 +9,7 @@ import com.chen.repository.OrderRepository;
 import com.chen.repository.ReportRepository;
 import com.chen.repository.SystemMessageRepository;
 import com.chen.service.ReportService;
-import com.chen.socketio.SystemMessageSender;
+import com.chen.socketio.MessageSender;
 import com.chen.util.DecimalUtils;
 import com.chen.util.ImageUtils;
 import com.chen.util.SnowFlakeUtil;
@@ -50,7 +50,7 @@ public class ReportServiceImpl implements ReportService {
     @Resource
     private DebtMapper debtMapper;
     @Resource
-    private SystemMessageSender systemMessageSender;
+    private MessageSender messageSender;
     @Resource
     private SystemMessageRepository systemMessageRepository;
 
@@ -177,7 +177,7 @@ public class ReportServiceImpl implements ReportService {
             systemMessage.setType(SystemMessage.REPORT_RESULT);
             systemMessage.setReceiverId(buyerId);
             systemMessage.setData(report);
-            systemMessageSender.sendMsgById(buyerId,systemMessage);
+            messageSender.sendSystemMessageById(buyerId,systemMessage);
             systemMessageRepository.save(systemMessage);
             return new ReturnType().success();
         } catch (Exception e) {
@@ -200,7 +200,7 @@ public class ReportServiceImpl implements ReportService {
         SystemMessage blkMsg = new SystemMessage();
         blkMsg.setType(SystemMessage.BE_BLACKLIST);
         blkMsg.setReceiverId(userId);
-        systemMessageSender.sendMsgById(userId,blkMsg);
+        messageSender.sendSystemMessageById(userId,blkMsg);
         systemMessageRepository.save(blkMsg);
     }
 }

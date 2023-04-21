@@ -97,4 +97,11 @@ public class AccountController {
     public ReturnType updatePrice(@RequestBody Account account) {
         return accountService.updatePrice(account);
     }
+
+    // 根据id查找账号
+    @IsAdmin
+    @GetMapping("/account/{accountId}")
+    public ReturnType getAccountById(@PathVariable("accountId") Long accountId) {
+        return accountService.getAccountById(accountId);
+    }
 }

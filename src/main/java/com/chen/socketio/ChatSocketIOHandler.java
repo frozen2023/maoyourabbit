@@ -1,10 +1,9 @@
 package com.chen.socketio;
 
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.chen.mapper.ChatMessageMapper;
 import com.chen.pojo.ChatMessage;
+import com.chen.pojo.SystemMessage;
+import com.chen.repository.ChatMessageRepository;
 import com.chen.util.ImageUtils;
-import com.chen.util.SnowFlakeUtil;
 import com.corundumstudio.socketio.AckRequest;
 import com.corundumstudio.socketio.SocketIOClient;
 import com.corundumstudio.socketio.annotation.OnConnect;
@@ -13,7 +12,9 @@ import com.corundumstudio.socketio.annotation.OnEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
-import java.util.*;
+import javax.security.auth.callback.CallbackHandler;
+import java.util.Objects;
+import java.util.Queue;
 
 // 聊天消息处理器
 
@@ -23,9 +24,11 @@ public class ChatSocketIOHandler {
     @Resource
     private ClientCache clientCache;
     @Resource
-    private ChatMessageMapper chatMessageMapper;
-    @Resource
     private ImageUtils imageUtils;
+    @Resource
+    private MessageSender messageSender;
+    @Resource
+    private ChatMessageRepository chatMessageRepository;
 
     @OnConnect
     public void onConnect(SocketIOClient client) {
@@ -37,7 +40,7 @@ public class ChatSocketIOHandler {
             System.out.println(id);
         }
         // 当用户上线时，给其发送未读消息
-        System.out.println("向用户"+userId+"发送了"+sendUnviewedMsg(client)+"条未读聊天消息");
+        sendOfflineChatMessages(client);
 
     }
 
@@ -50,34 +53,29 @@ public class ChatSocketIOHandler {
 
     @OnEvent(ClientCache.CHAT_EVENT)
     public void chatEvent(SocketIOClient client, RcvMessage msg, AckRequest ackRequest) {
-        // 文本消息
-        ChatMessage data = msg.getMessage();
-        data.setMessageId(SnowFlakeUtil.getSnowFlakeId());
+        ChatMessage chatMessage = msg.getMessage();
         Long senderId = getUserIdByClient(client);
-        data.setSenderId(senderId);
-        Long receiverId = data.getReceiverId();
-        if (data.getType() == 1) {
-            System.out.println("接收到"+ senderId +"用户发给"+receiverId+"的文本消息："+data.getInfo());
+        chatMessage.setSenderId(senderId);
+        Long receiverId = chatMessage.getReceiverId();
+        // 文本消息
+        if (chatMessage.getType() == 1) {
+            System.out.println("接收到"+ senderId +"用户发给"+receiverId+"的文本消息："+chatMessage.getInfo());
         }
         // 图片消息
-        if (data.getType() == 2) {
+        if (chatMessage.getType() == 2) {
             System.out.println("接收到"+ senderId +"用户发给"+receiverId+"的图片消息");
             String fileName = msg.getFileName();
             String base64Image = msg.getImage();
             byte[] bytes = imageUtils.imageToBytes(base64Image);
             String url = imageUtils.uploadImage(bytes, fileName);
             System.out.println("url: "+url);
-            data.setImageUrl(url);
+            chatMessage.setImageUrl(url);
         }
-        // 在线
-        if (clientCache.isOnline(receiverId)) {
-            data.setViewed(1);
-            sendMsgById(receiverId,data);
-        } else {  // 不在线
-            data.setViewed(0);
-        }
+        // 发送消息
+        messageSender.sendChatMessageById(receiverId,chatMessage);
         // 保存消息记录
-        chatMessageMapper.insert(data);
+        chatMessageRepository.save(chatMessage);
+
     }
 
     // 根据客户端获取用户id
@@ -87,23 +85,18 @@ public class ChatSocketIOHandler {
     }
 
     // 给用户发送未读消息
-    public int sendUnviewedMsg(SocketIOClient client) {
-        Long receiverId = getUserIdByClient(client);
-        QueryWrapper<ChatMessage> wrapper = new QueryWrapper<>();
-        wrapper.eq("receiver_id",receiverId).eq("viewed",0);
-        List<ChatMessage> msgs = chatMessageMapper.selectList(wrapper);
-        for (ChatMessage msg : msgs) {
-            client.sendEvent("chatEvent",msg);
-            msg.setViewed(1);
-            chatMessageMapper.updateById(msg);
+    public void sendOfflineChatMessages(SocketIOClient client) {
+        int cnt = 0;
+        Long userId = getUserIdByClient(client);
+        Queue<ChatMessage> msgQueue = clientCache.getOfflineChatMessageQueue(userId);
+        if(Objects.isNull(msgQueue) || msgQueue.size() == 0)
+            return;
+        int length = msgQueue.size();
+        for (int i = 0; i < length; i++) {
+            ChatMessage message = msgQueue.poll();
+            client.sendEvent(ClientCache.CHAT_EVENT,message);
+            cnt++;
         }
-        return msgs.size();
+        System.out.println("向用户"+userId+"发送了"+ cnt + "条未读聊天消息");
     }
-
-    // 根据id发送给客户端
-    public void sendMsgById(Long receiverId, ChatMessage msg) {
-        SocketIOClient client = clientCache.getUserClient(receiverId);
-        client.sendEvent("chatEvent",msg);
-    }
-
 }

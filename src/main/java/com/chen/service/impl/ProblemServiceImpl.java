@@ -13,7 +13,7 @@ import com.chen.repository.OrderRepository;
 import com.chen.repository.SystemMessageRepository;
 import com.chen.service.ProblemService;
 import com.chen.service.ReportService;
-import com.chen.socketio.SystemMessageSender;
+import com.chen.socketio.MessageSender;
 import com.chen.util.DecimalUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
@@ -37,7 +37,7 @@ public class ProblemServiceImpl implements ProblemService {
     @Resource
     private OrderRepository orderRepository;
     @Resource
-    private SystemMessageSender systemMessageSender;
+    private MessageSender messageSender;
     @Resource
     private SystemMessageRepository systemMessageRepository;
     @Resource
@@ -84,7 +84,7 @@ public class ProblemServiceImpl implements ProblemService {
                 SystemMessage systemMessage = new SystemMessage();
                 systemMessage.setType(SystemMessage.BE_BLACKLIST);
                 systemMessage.setReceiverId(sellerId);
-                systemMessageSender.sendMsgById(sellerId,systemMessage);
+                messageSender.sendSystemMessageById(sellerId,systemMessage);
                 systemMessageRepository.save(systemMessage);
             } else if(Double.compare(level,0) == 0) {
                 // 账号几乎不受损

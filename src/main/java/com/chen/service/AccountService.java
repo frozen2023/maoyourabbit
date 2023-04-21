@@ -20,4 +20,5 @@ public interface AccountService {
     ReturnType getPurchasableAccounts(String name, BigDecimal minPrice, BigDecimal maxPrice, String number, Long page);
     ReturnType offer(Long sellerId, Long accountId, BigDecimal bid);
     ReturnType updatePrice(Account account);
+    ReturnType getAccountById(Long accountId);
 }

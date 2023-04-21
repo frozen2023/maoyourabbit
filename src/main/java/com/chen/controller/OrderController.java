@@ -1,6 +1,7 @@
 package com.chen.controller;
 
 import com.chen.common.ReturnType;
+import com.chen.security.annotations.IsAdmin;
 import com.chen.security.annotations.IsUser;
 import com.chen.service.OrderService;
 import com.chen.util.ObjectUtils;
@@ -82,5 +83,12 @@ public class OrderController {
                                 @PathVariable("finished") Integer finished,
                                 @PathVariable("page") Integer page) {
         return orderService.getOrders(type,finished,page);
+    }
+
+    // 根据id查找订单
+    @IsAdmin
+    @GetMapping("/order/{orderId}")
+    public ReturnType getOrderById(@PathVariable("orderId") Long orderId) {
+        return orderService.getOrderById(orderId);
     }
 }

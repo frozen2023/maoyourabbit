@@ -1,7 +1,9 @@
 package com.chen.service.impl;
 
 import com.chen.common.ReturnType;
+import com.chen.pojo.ChatMessage;
 import com.chen.pojo.SystemMessage;
+import com.chen.repository.ChatMessageRepository;
 import com.chen.repository.SystemMessageRepository;
 import com.chen.service.MessageService;
 import com.chen.util.UserGetter;
@@ -24,6 +26,8 @@ public class MessageServiceImpl implements MessageService {
     private SystemMessageRepository systemMessageRepository;
     @Resource
     private UserGetter userGetter;
+    @Resource
+    private ChatMessageRepository chatMessageRepository;
 
     @Override
     public ReturnType getSystemMessages(Integer page) {
@@ -39,6 +43,17 @@ public class MessageServiceImpl implements MessageService {
         Map<String,Object> data = new HashMap<>();
         data.put("totalPages",totalPages);
         data.put("systemMessages",systemMessages);
+        return new ReturnType().success(data);
+    }
+
+    @Override
+    public ReturnType getChatMessages(Long userId) {
+        Long uid = userGetter.getUserId();
+        List<ChatMessage> asReceiver = chatMessageRepository.findAllByReceiverIdAndSenderId(uid, userId);
+        List<ChatMessage> asSender = chatMessageRepository.findAllByReceiverIdAndSenderId(userId, uid);
+        asReceiver.addAll(asSender);
+        Map<String,Object> data = new HashMap<>();
+        data.put("messages",asReceiver);
         return new ReturnType().success(data);
     }
 }

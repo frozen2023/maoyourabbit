@@ -82,7 +82,7 @@
         });
         socket.on('chatEvent', function (data) {
             output('<span class="username-msg"><font color="blue">'+getNowTime()+'&nbsp;</font>' + data + ' </span>');
-            console.log(data.info);
+            console.log(data);
         });
         socket.on('systemEvent', function (data) {
             output('<span class="username-msg"><font color="blue">'+getNowTime()+'&nbsp;</font>' + data + ' </span>');

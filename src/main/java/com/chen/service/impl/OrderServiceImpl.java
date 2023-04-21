@@ -99,6 +99,14 @@ public class OrderServiceImpl implements OrderService {
             if(order.getPaid() == 1) {
                 return new ReturnType().error();
             }
+            // 是否被冻结
+            if(buyer.getFrozen() == 1) {
+                return new ReturnType().error("用户钱包已被冻结");
+            }
+            // 余额是否充足
+            if(balance.compareTo(bid) == -1) {
+                return new ReturnType().error("余额不足");
+            }
             // 买家余额减少
             balance = DecimalUtils.subtract(balance,bid);
             buyer.setBalance(balance);
@@ -309,5 +317,17 @@ public class OrderServiceImpl implements OrderService {
         data.put("orders",orders);
         data.put("totalPages",totalPages);
         return new ReturnType().success(data);
+    }
+
+    @Override
+    public ReturnType getOrderById(Long orderId) {
+        Optional<Order> orderOp = orderRepository.findById(orderId);
+        if(orderOp.isPresent()) {
+            Order order = orderOp.get();
+            Map<String,Object> data = new HashMap<>();
+            data.put("order",order);
+            return new ReturnType().success(data);
+        }
+        return new ReturnType().error("未找到该订单");
     }
 }

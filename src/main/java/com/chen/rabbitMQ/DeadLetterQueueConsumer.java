@@ -7,7 +7,7 @@ import com.chen.mapper.UserMapper;
 import com.chen.pojo.*;
 import com.chen.repository.OrderRepository;
 import com.chen.repository.SystemMessageRepository;
-import com.chen.socketio.SystemMessageSender;
+import com.chen.socketio.MessageSender;
 import com.chen.util.DecimalUtils;
 import com.chen.util.ProfitUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -17,9 +17,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 @Component
@@ -34,7 +32,7 @@ public class DeadLetterQueueConsumer {
     @Resource
     private AccountMapper accountMapper;
     @Resource
-    private SystemMessageSender systemMessageSender;
+    private MessageSender messageSender;
     @Resource
     private SystemMessageRepository systemMessageRepository;
 
@@ -70,7 +68,7 @@ public class DeadLetterQueueConsumer {
                 systemMessage.setData(latestOrder);
                 systemMessage.setReceiverId(buyerId);
                 systemMessage.setType(SystemMessage.AUTO_CANCEL);
-                systemMessageSender.sendMsgById(buyerId,systemMessage);
+                messageSender.sendSystemMessageById(buyerId,systemMessage);
                 systemMessageRepository.save(systemMessage);
                 System.out.println("订单号为" + orderId + "的订单已自动取消");
             }
@@ -109,7 +107,7 @@ public class DeadLetterQueueConsumer {
                 systemMessage.setData(latestOrder);
                 systemMessage.setReceiverId(buyerId);
                 systemMessage.setType(SystemMessage.AUTO_CHECK);
-                systemMessageSender.sendMsgById(buyerId,systemMessage);
+                messageSender.sendSystemMessageById(buyerId,systemMessage);
                 systemMessageRepository.save(systemMessage);
                 System.out.println("订单号为" + orderId + "的订单已自动确认");
             }
@@ -152,7 +150,7 @@ public class DeadLetterQueueConsumer {
                 systemMessage.setData(latestOrder);
                 systemMessage.setReceiverId(sellerId);
                 systemMessage.setType(SystemMessage.AUTO_CANCEL_TRANSACTION);
-                systemMessageSender.sendMsgById(sellerId,systemMessage);
+                messageSender.sendSystemMessageById(sellerId,systemMessage);
                 systemMessageRepository.save(systemMessage);
                 System.out.println("订单号为" + orderId + "的订单已自动确认");
             }

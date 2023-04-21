@@ -1,5 +1,6 @@
 package com.chen.socketio;
 
+import com.chen.pojo.ChatMessage;
 import com.chen.pojo.SystemMessage;
 import com.corundumstudio.socketio.SocketIOClient;
 import org.springframework.stereotype.Component;
@@ -13,9 +14,11 @@ public class ClientCache {
     public static final String CHAT_EVENT = "chatEvent"; // 聊天事件
     public static final String SYSTEM_EVENT = "systemEvent"; // 系统通知
 
-
     // 离线系统消息暂存
     private static Map<Long, Queue<SystemMessage>> offlineSystemMessages = new ConcurrentHashMap<>();
+
+    // 离线聊天消息暂存
+    private static Map<Long, Queue<ChatMessage>> offlineChatMessages = new ConcurrentHashMap<>();
 
     // userId 定位到唯一客户端,用户只能单端登录
     private static Map<Long,SocketIOClient> clients = new ConcurrentHashMap<>();
@@ -56,7 +59,7 @@ public class ClientCache {
         return false;
     }
 
-    // 将离线消息加入队列中
+    // 将离线系统消息加入队列中
     public void addOfflineSystemMessage(Long receiverId, SystemMessage message) {
         Queue<SystemMessage> queue = offlineSystemMessages.get(receiverId);
         if(Objects.isNull(queue)) {
@@ -66,8 +69,24 @@ public class ClientCache {
         offlineSystemMessages.put(receiverId,queue);
     }
 
-    public Queue<SystemMessage> getOfflineMessageQueue(Long id) {
+    // 将离线聊天消息暂存
+    public void addOfflineChatMessage(Long receiverId, ChatMessage message) {
+        Queue<ChatMessage> queue = offlineChatMessages.get(receiverId);
+        if(Objects.isNull(queue)) {
+            queue = new ConcurrentLinkedQueue<>();
+        }
+        queue.add(message);
+        offlineChatMessages.put(receiverId,queue);
+    }
+
+    // 获取离线系统消息队列
+    public Queue<SystemMessage> getOfflineSystemMessageQueue(Long id) {
         return offlineSystemMessages.get(id);
+    }
+
+    // 获取离线聊天消息队列
+    public Queue<ChatMessage> getOfflineChatMessageQueue(Long id) {
+        return offlineChatMessages.get(id);
     }
 
 }
