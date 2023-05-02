@@ -23,4 +23,5 @@ public interface UserService  {
      ReturnType updateName(String username,String nickname);
      ReturnType auth(String realName,String identityCard);
      ReturnType bindingPhone(String phone);
+     ReturnType getUserById(Long userId);
 }

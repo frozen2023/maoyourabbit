@@ -27,7 +27,6 @@ public class MPConfig {
         mybatisPlusInterceptor.addInnerInterceptor(new OptimisticLockerInnerInterceptor());
         //分页
         mybatisPlusInterceptor.addInnerInterceptor(new PaginationInnerInterceptor(DbType.MYSQL));
-
         return mybatisPlusInterceptor;
     }
 }

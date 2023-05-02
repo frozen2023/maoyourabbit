@@ -3,6 +3,7 @@ package com.chen.controller;
 import com.chen.common.ReturnType;
 import com.chen.pojo.User;
 import com.chen.security.annotations.Common;
+import com.chen.security.annotations.IsAdmin;
 import com.chen.security.annotations.IsUser;
 import com.chen.service.UserService;
 import com.chen.util.ObjectUtils;
@@ -98,5 +99,12 @@ public class UserController {
     public ReturnType phone(@RequestBody Map map) {
         String phone = ObjectUtils.toString(map.get("phoneNumber"));
         return userService.bindingPhone(phone);
+    }
+
+    // 根据id查找用户
+    @IsAdmin
+    @GetMapping("/user/{userId}")
+    public ReturnType getUserById(@PathVariable("userId") Long userId) {
+        return userService.getUserById(userId);
     }
 }

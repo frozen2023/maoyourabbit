@@ -23,6 +23,7 @@ public class User implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @TableId(type = IdType.INPUT)
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Long userId; //id
     
     private String password; //账号

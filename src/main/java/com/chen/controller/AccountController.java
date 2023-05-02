@@ -10,7 +10,9 @@ import com.chen.util.ObjectUtils;;
 import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author Frozen
@@ -94,8 +96,21 @@ public class AccountController {
     // 卖家改价
     @IsUser
     @PutMapping("/account/price")
-    public ReturnType updatePrice(@RequestBody Account account) {
-        return accountService.updatePrice(account);
+    public ReturnType updatePrice(@RequestBody Map map) {
+        Long accountId = ObjectUtils.toLong(map.get("accountId"));
+        BigDecimal prePrice = DecimalUtils.toBigDecimal(map.get("prePrice"));
+        BigDecimal curPrice = DecimalUtils.toBigDecimal(map.get("curPrice"));
+        return accountService.updatePrice(accountId, prePrice, curPrice);
+    }
+
+    // 卖家删除账号
+    @IsUser
+    @DeleteMapping("/account")
+    public ReturnType deleteAccount(@RequestBody Map map) {
+        Integer type = ObjectUtils.toInteger(map.get("type"));
+        Long accountId = ObjectUtils.toLong(map.get("accountId"));
+        List<Long> accountIds = ObjectUtils.toLongList(map.get("accountIds"));
+        return accountService.deleteAccount(type, accountId, accountIds);
     }
 
     // 根据id查找账号

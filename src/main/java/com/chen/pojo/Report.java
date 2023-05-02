@@ -30,10 +30,13 @@ public class Report implements Serializable {
     public static final Integer FIND_ACCOUNT = 1;
     public static final Integer OTHERS = 2;
     @Id
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Long reportId;  // 举报id
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Long whistleblowerId; // 告发者id
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Long defendantId; // 被告者id
 
     private String cause; // 文本原因
@@ -42,6 +45,7 @@ public class Report implements Serializable {
 
     private Integer type; // 类型：找回账号/其他
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Long orderId; // type =1 时填入
 
     private Integer handled; // 是否被处理

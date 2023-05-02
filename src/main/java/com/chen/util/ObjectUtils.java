@@ -2,8 +2,7 @@ package com.chen.util;
 
 
 import java.lang.reflect.Field;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 // 解决Object转其他类型时冗余的判空操作
 
@@ -35,6 +34,18 @@ public class ObjectUtils {
             return null;
         }
         return Double.valueOf(o.toString());
+    }
+
+    public static List<Long> toLongList(Object o) {
+        if (Objects.isNull(o)) {
+            return null;
+        }
+        List<String> list = (List<String>) o;
+        List<Long> result = new ArrayList<>();
+        for (String item : list) {
+            result.add(Long.valueOf(item));
+        }
+        return result;
     }
 
 

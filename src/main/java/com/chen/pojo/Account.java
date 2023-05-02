@@ -38,9 +38,11 @@ public class Account implements Serializable {
     private BigDecimal price;
 
     @TableField("seller_id")
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Long sellerId;
 
     @TableId(value = "account_id",type = IdType.INPUT)
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Long accountId;
 
     @TableField("varified")

@@ -33,12 +33,16 @@ public class Order implements Serializable {
     }
 
     @Id
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Long orderId;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Long accountId;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Long buyerId;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Long sellerId;
 
     private BigDecimal bid;

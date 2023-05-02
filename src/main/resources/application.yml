@@ -38,12 +38,12 @@ qiniu:
     # 配置secretKey
     secretKey: Fc-Z6wx_L6Rqi2010j6E6f6OVxVUnykx3XbXKj29
     # 配置空间名称
-    bucket: frozen2023
+    bucket: ershojiaoyi
     # 配置域名
-    domain: rrz6xq6jx.hn-bkt.clouddn.com
+    domain: rtx81msgm.hn-bkt.clouddn.com
 # netty-socketio 配置
 socketio:
-  host: 127.0.0.1
+  host: 0.0.0.0
   port: 9000
   # 设置最大每帧处理数据的长度，防止他人利用大数据来攻击服务器
   maxFramePayloadLength: 1048576

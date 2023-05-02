@@ -23,7 +23,9 @@ public class SystemMessage implements Serializable {
     public static final Integer ACCOUNT_VERIFY_RESULT = 4;
     public static final Integer BE_BLACKLIST = 5;
     public static final Integer REPORT_RESULT = 6;
+    public static final Integer LOWER_PRICE = 7;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Long receiverId; // 接收方id
 
     private Integer type; // 类型

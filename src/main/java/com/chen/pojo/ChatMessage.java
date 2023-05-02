@@ -17,8 +17,10 @@ public class ChatMessage implements Serializable {
     public static final Integer TYPE_TEXT = 1;
     public static final Integer TYPE_IMAGE = 2;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Long senderId; // 发送方id
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Long receiverId; // 接收方id
 
     private Integer type;  //消息类型：1 文本消息 2 图片消息

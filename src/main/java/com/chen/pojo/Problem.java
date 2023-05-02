@@ -21,8 +21,10 @@ public class Problem implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @TableId(value = "problem_id",type = IdType.INPUT)
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Long problemId;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     @TableField("order_id")
     private Long orderId;
 

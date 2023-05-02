@@ -22,14 +22,17 @@ public class Debt implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @TableId(value = "debt_id",type = IdType.INPUT)
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Long debtId;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     @TableField("debtor_id")
     private Long debtorId;
 
     @TableField("amount")
     private BigDecimal amount;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
     @TableField("account_id")
     private Long accountId;
 

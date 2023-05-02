@@ -5,6 +5,7 @@ import com.chen.pojo.Account;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * @author Frozen
@@ -19,6 +20,7 @@ public interface AccountService {
     ReturnType updateAccount(Account account);
     ReturnType getPurchasableAccounts(String name, BigDecimal minPrice, BigDecimal maxPrice, String number, Long page);
     ReturnType offer(Long sellerId, Long accountId, BigDecimal bid);
-    ReturnType updatePrice(Account account);
+    ReturnType updatePrice(Long accountId, BigDecimal prePrice, BigDecimal curPrice);
+    ReturnType deleteAccount(Integer type, Long accountId, List<Long> accountIds);
     ReturnType getAccountById(Long accountId);
 }

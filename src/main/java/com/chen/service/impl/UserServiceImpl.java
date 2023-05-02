@@ -74,6 +74,7 @@ public class UserServiceImpl implements UserService {
         redisCache.setCacheObject("login:"+userId,loginUser);
         map.put("token",token);
         map.put("authority",authority);
+        map.put("userId",userId.toString());
         log.info("id为{}的用户登录成功!",userId);
         return new ReturnType().success(map);
     }
@@ -104,11 +105,6 @@ public class UserServiceImpl implements UserService {
         }
     }
 
-    /*
-    * 左大括号前不换行
-      左大括号后换行
-     右大括号前换行
-    右大括号后还有else等代码则不换行；表示终止的右大括号后必须换行*/
     @Override
     public ReturnType email(String email) {
         if (AuthUtil.authEmail(email)) {
@@ -187,5 +183,16 @@ public class UserServiceImpl implements UserService {
             }
         }
         return new ReturnType().error();
+    }
+
+    @Override
+    public ReturnType getUserById(Long userId) {
+        User user = userMapper.selectById(userId);
+        if (Objects.isNull(user)) {
+            return new ReturnType().error("未找到该用户");
+        }
+        Map<String,Object> data = new HashMap<>();
+        data.put("user",user);
+        return new ReturnType().success(data);
     }
 }

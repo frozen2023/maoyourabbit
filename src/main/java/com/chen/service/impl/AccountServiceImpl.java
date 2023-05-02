@@ -1,12 +1,12 @@
 package com.chen.service.impl;
 
-import ch.qos.logback.core.pattern.color.MagentaCompositeConverter;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.chen.common.ReturnType;
 import com.chen.mapper.BidMapper;
 import com.chen.pojo.*;
 import com.chen.mapper.AccountMapper;
+import com.chen.repository.SystemMessageRepository;
 import com.chen.service.AccountService;
 import com.chen.socketio.MessageSender;
 import com.chen.util.SnowFlakeUtil;
@@ -40,6 +40,8 @@ public class AccountServiceImpl implements AccountService {
     private UserGetter userGetter;
     @Resource
     private BidMapper bidMapper;
+    @Resource
+    private SystemMessageRepository systemMessageRepository;
 
     @Override
     public ReturnType putAccount(Account account) {
@@ -151,6 +153,7 @@ public class AccountServiceImpl implements AccountService {
             accountMapper.updateById(account);
             return new ReturnType().success();
         } catch (Exception e) {
+            e.printStackTrace();
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return new ReturnType().error();
         }
@@ -199,17 +202,69 @@ public class AccountServiceImpl implements AccountService {
             bidMapper.insert(bid);
             return new ReturnType().success();
         } catch (Exception e) {
+            e.printStackTrace();
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return new ReturnType().error();
         }
     }
 
     @Override
-    public ReturnType updatePrice(Account account) {
+    public ReturnType updatePrice(Long accountId, BigDecimal prePrice, BigDecimal curPrice) {
         try {
+            Account account = accountMapper.selectById(accountId);
+            // 降价
+            if (prePrice.compareTo(curPrice) == 1) {
+                // 给出价者发送降价提醒
+                QueryWrapper<Bid> wrapper = new QueryWrapper<>();
+                wrapper.eq("account_id",accountId);
+                List<Bid> bids = bidMapper.selectList(wrapper);
+                System.out.println("bids==>" + bids);
+                Map<String,Object> data = new HashMap<>();
+                data.put("prePrice",prePrice);
+                data.put("curPrice",curPrice);
+                data.put("account",account);
+                for (Bid bid : bids) {
+                    Long bidderId = bid.getBidderId();
+                    SystemMessage systemMessage = new SystemMessage();
+                    systemMessage.setType(SystemMessage.LOWER_PRICE);
+                    systemMessage.setReceiverId(bidderId);
+                    systemMessage.setData(data);
+                    messageSender.sendSystemMessageById(bidderId,systemMessage);
+                    systemMessageRepository.save(systemMessage);
+                }
+            }
+            account.setPrice(curPrice);
             accountMapper.updateById(account);
             return new ReturnType().success();
         } catch (Exception e) {
+            e.printStackTrace();
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            return new ReturnType().error();
+        }
+    }
+
+    @Override
+    public ReturnType deleteAccount(Integer type, Long accountId, List<Long> accountIds) {
+        try {
+            // 单次删除
+            if (type == 1) {
+                Account account = accountMapper.selectById(accountId);
+                if (account.getBought() == 1) {
+                    return new ReturnType().error("账号已被购买");
+                }
+                accountMapper.deleteById(accountId);
+            } else {
+                // 批量删除
+                for (Long id : accountIds) {
+                    Account account = accountMapper.selectById(id);
+                    if (account.getBought() == 0) {
+                        accountMapper.deleteById(id);
+                    }
+                }
+            }
+            return new ReturnType().success();
+        } catch (Exception e) {
+            e.printStackTrace();
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
             return new ReturnType().error();
         }
