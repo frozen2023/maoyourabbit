@@ -1,5 +1,6 @@
 package com.chen.service.impl;
 
+import com.chen.common.Authority;
 import com.chen.common.ReturnType;
 import com.chen.pojo.User;
 import com.chen.mapper.UserMapper;
@@ -44,6 +45,7 @@ public class UserServiceImpl implements UserService {
     public ReturnType register(User user) {
         user.setUserId(SnowFlakeUtil.getSnowFlakeId());
         user.setPassword(passwordEncoder.encode(user.getPassword()));
+        user.setHeadUrl(Authority.DEFAULT_HEAD);
         int r = userMapper.insert(user);
         if (r>0){
             log.info("id为{}的用户注册成功",user.getUserId());
@@ -64,13 +66,9 @@ public class UserServiceImpl implements UserService {
         }
         LoginUser loginUser = (LoginUser)authenticate.getPrincipal();
         Long userId = loginUser.getUser().getUserId();
-        if(redisCache.getCacheObject("login:"+userId) != null) {
-            // 顶号操作
-            return new ReturnType().error("账号已被登录");
-        }
         String token = TokenUtil.createToken(userId);
         String authority = loginUser.getUser().getAuthority();
-        Map<String,Object> map = new HashMap();
+        Map<String,Object> map = new HashMap<>();
         redisCache.setCacheObject("login:"+userId,loginUser);
         map.put("token",token);
         map.put("authority",authority);
@@ -96,7 +94,7 @@ public class UserServiceImpl implements UserService {
         }
         Map<String, String> map = imageUtils.uploadImage(file);
         String url = map.get("imageUrl");
-        User user = userGetter.getUser();
+        User user = userGetter.getNewUser();
         user.setHeadUrl(url);
         if (userMapper.updateById(user) > 0) {
             return new ReturnType().success(map);
@@ -108,7 +106,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public ReturnType email(String email) {
         if (AuthUtil.authEmail(email)) {
-            User user = userGetter.getUser();
+            User user = userGetter.getNewUser();
             user.setEmail(email);
             if (userMapper.updateById(user) > 0) {
                 return new ReturnType().success();
@@ -122,7 +120,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public ReturnType getUserDetails() {
-        User user = userGetter.getUser();
+        Long userId = userGetter.getUserId();
+        User user = userMapper.selectById(userId);
         if (Objects.isNull(user)) {
             return new ReturnType().error();
         }
@@ -131,7 +130,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public ReturnType updatePwd(String pwd) {
-        User user = userGetter.getUser();
+        User user = userGetter.getNewUser();
         user.setPassword(passwordEncoder.encode(pwd));
         if (userMapper.updateById(user) > 0) {
             return new ReturnType().success();
@@ -142,13 +141,13 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public ReturnType updateName(String username, String nickname) {
-        User user = userGetter.getUser();
-        if (!Objects.isNull(username) && "".equals(username)) {
-            user.setUsername(username);
-        } else {
+        User user = userGetter.getNewUser();
+        if (Objects.isNull(username) || "".equals(username)) {
             return new ReturnType().error("用户名不能为空");
+        } else {
+            user.setUsername(username);
         }
-        if (!Objects.isNull(nickname) && "".equals(nickname)) {
+        if (!Objects.isNull(nickname) && !("".equals(nickname))) {
             user.setNickname(nickname);
         }
         if (userMapper.updateById(user) > 0) {
@@ -163,7 +162,7 @@ public class UserServiceImpl implements UserService {
         if (AuthUtil.authIdentity(realName,identityCard)) {
             return new ReturnType().error("实名认证失败");
         }
-        User user = userGetter.getUser();
+        User user = userGetter.getNewUser();
         user.setAuthenticated(1);
         user.setRealName(realName);
         user.setIdentityCard(identityCard);
@@ -176,7 +175,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public ReturnType bindingPhone(String phone) {
         if (AuthUtil.authPhone(phone)) {
-            User user = userGetter.getUser();
+            User user = userGetter.getNewUser();
             user.setPhoneNumber(phone);
             if (userMapper.updateById(user) > 0) {
                 return new ReturnType().success();

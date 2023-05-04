@@ -1,7 +1,6 @@
 package com.chen.socketio;
 
 import com.chen.pojo.ChatMessage;
-import com.chen.pojo.SystemMessage;
 import com.chen.repository.ChatMessageRepository;
 import com.chen.util.ImageUtils;
 import com.corundumstudio.socketio.AckRequest;
@@ -12,7 +11,6 @@ import com.corundumstudio.socketio.annotation.OnEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
-import javax.security.auth.callback.CallbackHandler;
 import java.util.Objects;
 import java.util.Queue;
 
@@ -37,18 +35,21 @@ public class ChatSocketIOHandler {
         log.info("id为:{}的用户连接建立成功!",userId);
         System.out.println("当前在线用户：");
         for (Long id : clientCache.getOnlineUsers()) {
-            System.out.println(id);
+            System.out.println("用户" + id + "     共在" + clientCache.getUserClient(id).size() + "处登录");
         }
         // 当用户上线时，给其发送未读消息
         sendOfflineChatMessages(client);
-
     }
 
     @OnDisconnect
     public void onDisconnect(SocketIOClient client) {
         Long userId = getUserIdByClient(client);
-        clientCache.deleteUserCacheByUserId(userId);
+        clientCache.deleteUserCacheByClient(userId, client);
         log.info("id为:{}的用户连接关闭成功!",userId);
+        System.out.println("当前在线用户：");
+        for (Long id : clientCache.getOnlineUsers()) {
+            System.out.println("用户" + id + "     共在" + clientCache.getUserClient(id).size() + "处登录");
+        }
     }
 
     @OnEvent(ClientCache.CHAT_EVENT)
@@ -59,11 +60,11 @@ public class ChatSocketIOHandler {
         Long receiverId = chatMessage.getReceiverId();
         // 文本消息
         if (chatMessage.getType() == 1) {
-            System.out.println("接收到"+ senderId +"用户发给"+receiverId+"的文本消息："+chatMessage.getInfo());
+            System.out.println("接收到" + senderId + "用户发给" + receiverId + "的文本消息：" + chatMessage.getInfo());
         }
         // 图片消息
         if (chatMessage.getType() == 2) {
-            System.out.println("接收到"+ senderId +"用户发给"+receiverId+"的图片消息");
+            System.out.println("接收到"+ senderId +"用户发给" + receiverId + "的图片消息");
             String fileName = msg.getFileName();
             String base64Image = msg.getImage();
             byte[] bytes = imageUtils.imageToBytes(base64Image);
@@ -97,6 +98,6 @@ public class ChatSocketIOHandler {
             client.sendEvent(ClientCache.CHAT_EVENT,message);
             cnt++;
         }
-        System.out.println("向用户"+userId+"发送了"+ cnt + "条未读聊天消息");
+        System.out.println("向用户" + userId + "发送了" + cnt + "条未读聊天消息");
     }
 }

@@ -20,18 +20,22 @@ public class ClientCache {
     // 离线聊天消息暂存
     private static Map<Long, Queue<ChatMessage>> offlineChatMessages = new ConcurrentHashMap<>();
 
-    // userId 定位到唯一客户端,用户只能单端登录
-    private static Map<Long,SocketIOClient> clients = new ConcurrentHashMap<>();
+    // userId 定位到客户端列表
+    private static Map<Long,List<SocketIOClient>> clients = new ConcurrentHashMap<>();
 
     //添加客户端
     public void addClient(Long userId, SocketIOClient socketIOClient) {
-        if(!isOnline(userId)) {
-            clients.put(userId,socketIOClient);
+        List<SocketIOClient> socketIOClients = clients.get(userId);
+        if (Objects.isNull(socketIOClients)) {
+            socketIOClients = new ArrayList<>();
         }
+        socketIOClients.add(socketIOClient);
+        clients.put(userId, socketIOClients);
+        
     }
 
     //获取用户的页面通道信息
-    public SocketIOClient getUserClient(Long userId) {
+    public List<SocketIOClient> getUserClient(Long userId) {
         return clients.get(userId);
     }
 
@@ -40,23 +44,29 @@ public class ClientCache {
         clients.remove(userId);
     }
 
-    //获取在线的客户端数目
-    public int clientCount() {
-        return clients.size();
+    //根据用户Id删除用户通道连接缓存 暂无使用
+    public void deleteUserCacheByClient(Long userId, SocketIOClient client) {
+        List<SocketIOClient> socketIOClients = clients.get(userId);
+        socketIOClients.removeIf(client1 -> client1.equals(client));
     }
 
     // 获取在线用户
     public Set<Long> getOnlineUsers() {
-        return clients.keySet();
+        Set<Long> set = new HashSet<>();
+        Set<Long> keySet = clients.keySet();
+        for (Long key : keySet) {
+            List<SocketIOClient> socketIOClients = clients.get(key);
+            if (socketIOClients.size() > 0) {
+                set.add(key);
+            }
+        }
+        return set;
     }
 
     // 判断是否在线
     public boolean isOnline(Long receiverId) {
-        SocketIOClient userClient = getUserClient(receiverId);
-        if (!Objects.isNull(userClient)) {
-            return true;
-        }
-        return false;
+        List<SocketIOClient> userClient = getUserClient(receiverId);
+        return !Objects.isNull(userClient) && userClient.size() > 0;
     }
 
     // 将离线系统消息加入队列中
