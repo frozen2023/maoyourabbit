@@ -16,7 +16,6 @@ import java.util.*;
 
 @Component
 public class ImageUtils {
-
     //使用时只能使用注入,不能使用new(),不然会导致配置文件读取不到
     @Value("${qiniu.kodo.accessKey}")
     String accessKey;

@@ -13,7 +13,6 @@ public class CloneUtil {
             oos = new ObjectOutputStream(bos);
             oos.writeObject(object);
             oos.flush();
-
             bis = new ByteArrayInputStream(bos.toByteArray());
             ois = new ObjectInputStream(bis);
             return (T) ois.readObject();

@@ -32,7 +32,14 @@ public class UserController {
         return userService.register(user);
     }
 
-    // 登录
+    // 发送验证码
+    @PostMapping("/user/loginCode")
+    public ReturnType sendLoginCode(@RequestBody Map map) {
+        String phone = ObjectUtils.toString(map.get("phone"));
+        return userService.sendLoginCode(phone);
+
+    }
+    // 密码登录
     @PostMapping("/user/login")
     public ReturnType login(@RequestBody User user) {
         return userService.login(user);

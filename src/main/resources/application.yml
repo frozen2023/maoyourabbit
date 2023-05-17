@@ -42,6 +42,10 @@ qiniu:
     # 配置域名
     domain: rtx81msgm.hn-bkt.clouddn.com
 # netty-socketio 配置
+aliyun:
+  sms:
+    access+
+
 socketio:
   host: 0.0.0.0
   port: 9000

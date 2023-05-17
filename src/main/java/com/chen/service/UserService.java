@@ -14,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
  */
 public interface UserService  {
      ReturnType register(User user);
+     ReturnType sendLoginCode(String phone);
      ReturnType login(User user);
      ReturnType logout(Long userId);
      ReturnType head(MultipartFile file);
@@ -25,3 +26,4 @@ public interface UserService  {
      ReturnType bindingPhone(String phone);
      ReturnType getUserById(Long userId);
 }
+
