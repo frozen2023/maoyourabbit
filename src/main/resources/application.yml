@@ -34,9 +34,9 @@ mybatis-plus:
 qiniu:
   kodo:
     # 配置accessKey
-    accessKey: lIjnI4u48v1kMv2Nd2D1fs61kKHY8gxELa7zcbml
+    accessKey: 
     # 配置secretKey
-    secretKey: Fc-Z6wx_L6Rqi2010j6E6f6OVxVUnykx3XbXKj29
+    secretKey: 
     # 配置空间名称
     bucket: ershojiaoyi
     # 配置域名
