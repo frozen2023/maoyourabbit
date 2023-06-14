@@ -11,8 +11,8 @@ import com.aliyuncs.profile.DefaultProfile;
  * 短信发送工具类
  */
 public class SMSUtils {
-	public static final String accessKeyId = "LTAI5t5cXpYTz17DNJDCcThm";
-	public static final String accessKeySecret = "Dx0VG55ZpFldgO2EhKIHHHkae0MM7W";
+	public static final String accessKeyId = "";
+	public static final String accessKeySecret = "";
 	public static final String signName = "贸游兔";
 	public static final String templateCode = "SMS_460775155";
 	public static final String regionId = "cn-hangzhou";
